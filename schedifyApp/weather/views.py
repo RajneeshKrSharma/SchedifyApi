@@ -408,7 +408,7 @@ def perform(pincode, scheduleItem, userEmailId):
                     update_request = prepare_forcast_update_request_scheduleItem_obj(
                         current_time=current_time,
                         existing_weather_forecast_data=existing_weather_forecast_data,
-                        nextNotifyAt=nextNotifyAt,
+                        nextNotifyAt=notifyTime,
                         scheduledItem=scheduleItem,
                         time_diff=time_diff_for_notifyIn,
                         isNotifyAccountable=True
@@ -433,7 +433,7 @@ def perform(pincode, scheduleItem, userEmailId):
                     update_request = prepare_forcast_update_request_scheduleItem_obj(
                         current_time=current_time,
                         existing_weather_forecast_data=existing_weather_forecast_data,
-                        nextNotifyAt=nextNotifyAt,
+                        nextNotifyAt=notifyTime,
                         scheduledItem=scheduleItem,
                         isNotifyAccountable=True,
                         time_diff=time_diff_for_notifyIn
@@ -444,63 +444,6 @@ def perform(pincode, scheduleItem, userEmailId):
 
             else:
                 print("🔴 Next_notify_at is None. 🔴")
-                weather_data = {}
-                print("WHILE CREATE : revisedScheduleDateTime ->", revisedScheduleDateTime)
-                print("WHILE CREATE : current_time ->", current_time)
-
-                time_diff = abs((revisedScheduleDateTime - current_time).total_seconds()) / DIVISOR
-                print("WHILE CREATE : time_diff of abs((revisedScheduleDateTime - current_time) ->", time_diff)
-
-                time_diff = round(time_diff)
-                print("WHILE CREATE : round off time_diff of abs((revisedScheduleDateTime - current_time) ->",
-                      time_diff)
-
-                assumed_notify_time = get_adjusted_time(current_time, time_diff)
-                print("assumed_notify_time :", assumed_notify_time)
-
-                if assumed_notify_time is not None:
-                    if assumed_notify_time > revisedScheduleDateTime:
-                        print("assumed_notify_time :", assumed_notify_time, "is GREATER THAN revisedScheduleDateTime :",
-                              revisedScheduleDateTime)
-                        notifyTime = revisedScheduleDateTime - timedelta(minutes=5)
-                        print("notify time will be less than 5 min before current time i.e", notifyTime)
-                        time_diff_for_notifyIn = abs(notifyTime - current_time).total_seconds() / DIVISOR
-
-                    else:
-                        print("notify time will be assumed_notify_time:", assumed_notify_time)
-                        notifyTime = assumed_notify_time
-                        time_diff_for_notifyIn = time_diff
-
-                    print("time_diff_for_notifyIn :", time_diff_for_notifyIn)
-
-                    time_diff_for_notifyIn = round(time_diff_for_notifyIn)
-                    print("time_diff_for_notifyIn round : ", time_diff_for_notifyIn)
-
-                    requestBody = prepare_forcast_create_request(
-                        weather_data=weather_data,
-                        notifyTime=notifyTime,
-                        notifyInTime=get_time_until_update(time_diff_for_notifyIn)
-                    )
-                    serializer = WeatherForecastSerializer(existing_weather_forecast_data, data=requestBody,
-                                                           partial=True)
-                    if serializer.is_valid():
-                        serializer.save()
-                    else:
-                        print("serializer error 1 : ", serializer.errors)
-
-
-                else:
-                    requestBody = prepare_forcast_create_request(
-                        weather_data=weather_data,
-                        notifyTime=None,
-                        notifyInTime=None
-                    )
-                    serializer = WeatherForecastSerializer(existing_weather_forecast_data, data=requestBody,
-                                                           partial=True)
-                    if serializer.is_valid():
-                        serializer.save()
-                    else:
-                        print("serializer error 2 : ", serializer.errors)
 
 
         else:
