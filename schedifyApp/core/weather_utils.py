@@ -63,7 +63,7 @@ def update_forecast_entry(forecast_id, forecast_data):
 
 
 def send_weather_notification(request):
-    url = "http://localhost:8000/api/communication/send-weather-notify-email"
+    url = "https://schedify.pythonanywhere.com/api/communication/send-weather-notify-email"
     #print(f"request: {request}")
     try:
         response = httpx.post(url, json=request)
