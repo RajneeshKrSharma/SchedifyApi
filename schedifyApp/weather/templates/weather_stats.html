@@ -230,6 +230,7 @@
               <th>Last Updated</th>
               <th>Status</th>
               <th>Scheduled Date & Time</th>
+              <th>Scheduled Item Created At</th>
               <th>Scheduled ID</th>
               <th>Pincode</th>
               <th>Forecast Time</th>
@@ -261,6 +262,7 @@
                 {% endif %}
               </td>
               <td>{{ forecast.scheduleItem.dateTime }}</td>
+              <td>{{ forecast.scheduleItem.lastScheduleOn }}</td>
               <td>{{ forecast.scheduleItem.id }}</td>
               <td>{{ forecast.pincode }}</td>
               <td>{{ forecast.forecast_time }}</td>
