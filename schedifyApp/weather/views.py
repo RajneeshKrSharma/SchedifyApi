@@ -209,7 +209,7 @@ class WeatherStatus(APIView):
         if user_scheduled_object is not None:
             perform(pincode, user_scheduled_object, userEmailId)
 
-            weather_item_obj = get_object_or_404(WeatherForecast, scheduleItem=user_scheduled_object)
+            weather_item_obj = WeatherForecast.objects.filter(scheduleItem=user_scheduled_object)
             weather_status_images = WeatherStatusImages.objects.all()
 
             response_data = {
