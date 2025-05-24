@@ -213,8 +213,6 @@ class WeatherStatus(APIView):
             weather_status_images = WeatherStatusImages.objects.all()
 
             response_data = {
-                "pincode": pincode,
-                "schedule_item": ScheduleItemListSerializers(user_scheduled_object).data,
                 "weather_notify_details": WeatherForecastSerializer(weather_item_obj).data,
                 "weather_status_images": WeatherStatusImagesSerializer(weather_status_images, many=True).data
             }
