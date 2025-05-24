@@ -29,7 +29,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '10.0.2.2', '127.0.0.1', 'schedify.pythonanywhere.com']
 
-dotenv_path = ""
+dotenv_path = ".env"
 load_dotenv(dotenv_path)
 
 EMAIL_HOST_USER_KEY = os.getenv("email_host_user")

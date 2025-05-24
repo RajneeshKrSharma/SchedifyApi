@@ -224,208 +224,6 @@ class WeatherStatus(APIView):
 
 
 def perform(pincode, scheduleItem, userEmailId):
-    ist = timezone("Asia/Kolkata")
-    current_time = now()
-    current_time = make_aware(current_time) if is_naive(current_time) else current_time.astimezone(ist)
-
-    DIVISOR = 3600  # Convert seconds to hours
-
-    weather_forecast_data = fetch_weather_data_by_pincode(pincode)
-
-    print(" P1 (a1)" * 20)
-
-    # 1. Fetch/Refresh Weather Data
-
-    try:
-        pincode_weather_data = get_object_or_404(WeatherPincodeMappedData, pincode=pincode)
-
-        print("P 1 (a)" * 20)
-        if pincode_weather_data:
-            print("P 1 (b)" * 20)
-
-            last_updated = datetime.fromisoformat(pincode_weather_data["last_updated"])
-            last_updated = make_aware(last_updated) if is_naive(last_updated) else last_updated.astimezone(ist)
-
-            time_diff = abs((last_updated - current_time).total_seconds()) / DIVISOR
-            print("P 1 (c)" * 20)
-
-            if time_diff > 3:
-                request = {
-                    "weather_data": weather_forecast_data,
-                    "updated_count": pincode_weather_data.updated_count + 1
-                }
-                serializer = WeatherPincodeMappedDataSerializer(pincode_weather_data, data=request.data, partial=True)
-
-                if serializer.is_valid():
-                    serializer.save()
-                    print("WeatherPincodeMappedData UPDATED")
-                else:
-                    print("INVALID WeatherPincodeMappedData")
-                print("P 1 (d)" * 20)
-
-            else:
-                print("P 1 (e)" * 20)
-        else:
-            print("P 1 (f)" * 20)
-            requestBody = {
-                "pincode": pincode,
-                "weather_data": weather_forecast_data,
-                "updated_count": 0
-            }
-            serializer = WeatherPincodeMappedDataSerializer(data=requestBody)
-            if serializer.is_valid():
-                serializer.save()
-                print("WeatherPincodeMappedData SAVED")
-            else:
-                print("INVALID WeatherPincodeMappedData")
-            #create_weather_data_for_pincode_entry(pincode, weather_forecast_data)
-            print("P 1 (g)" * 20)
-    except:
-        print("P 1 except (f)" * 20)
-        requestBody = {
-            "pincode": pincode,
-            "weather_data": weather_forecast_data,
-            "updated_count": 0
-        }
-        serializer = WeatherPincodeMappedDataSerializer(data=requestBody)
-        if serializer.is_valid():
-            serializer.save()
-            print("WeatherPincodeMappedData SAVED")
-        else:
-            print("INVALID WeatherPincodeMappedData")
-
-        print("P 1 except (f) completed" * 20)
-
-    print("P 2" * 20)
-
-    # 2. Parse schedule datetime
-    schedule_dt = scheduleItem.dateTime.astimezone(ist)
-
-    print(f"schedule_dt : {schedule_dt}")
-
-    # 3. Handle expired schedule item
-    if not (current_time <= schedule_dt <= current_time + timedelta(hours=24)):
-        print("P 3" * 20)
-        from schedifyApp.schedule_list.models import ScheduleItemList
-        expired_items = ScheduleItemList.objects.filter(dateTime__lt=current_time)
-
-        if expired_items.exists():
-            forecasts = WeatherForecast.objects.filter(scheduleItem__in=expired_items, isActive=True)
-            if forecasts.exists():
-                forecasts.update(isActive=False, last_updated=now())
-        return  # Exit after handling expired forecast
-
-    print("P 4" * 20)
-
-    # 4. Within valid schedule: Prepare forecast mapping
-    forecast_list = weather_forecast_data.get("list", [])
-    forecast_lookup = {
-        datetime.strptime(entry["dt_txt"], "%Y-%m-%d %H:%M:%S"): entry
-        for entry in forecast_list if "dt_txt" in entry
-    }
-
-    print("P 5" * 20)
-
-    rounded_schedule = round_down_to_nearest_3hr(schedule_dt)
-    matched_forecast = forecast_lookup.get(rounded_schedule)
-
-    if not matched_forecast:
-        return  # No matching forecast
-
-    # 5. Forecast matching and DB operation
-    forecast_time = ist.localize(datetime.strptime(matched_forecast["dt_txt"], "%Y-%m-%d %H:%M:%S"))
-    forecast_time_dt = datetime.strptime(matched_forecast["dt_txt"], "%Y-%m-%d %H:%M:%S")
-    forecast_time_ist = timezone("Asia/Kolkata").localize(forecast_time_dt)
-    forecast_time_str = forecast_time_ist.strftime("%Y-%m-%dT%H:%M:%S")
-
-    unique_key = f"{pincode}-{scheduleItem.id}"
-
-    revisedScheduleDateTime = schedule_dt - getTimeDelta(1, TimeUnitType.Hour)
-
-    print(f"forecast_time ------------> {forecast_time}")
-    print(f"revisedScheduleDateTime ------------> {revisedScheduleDateTime}")
-
-    print(f"forecast_time: {forecast_time}")
-    forecast_entry = WeatherForecast.objects.filter(
-        unique_key=unique_key,
-        pincode=pincode
-    )
-
-    print("P 6" * 20)
-
-    if forecast_entry:
-        notify_at = forecast_entry.next_notify_at
-        if notify_at:
-            notify_at = make_aware(notify_at) if is_naive(notify_at) else notify_at.astimezone(ist)
-            if notify_at < current_time:
-                time_diff = int(abs((notify_at - revisedScheduleDateTime).total_seconds()) / DIVISOR)
-                update_request = prepare_forcast_update_request_for_schedule_obj(
-                    current_time=current_time,
-                    existing_weather_forecast_data=forecast_entry,
-                    nextNotifyAt=notify_at,
-                    scheduledItem=scheduleItem,
-                    time_diff=time_diff,
-                    isNotifyAccountable=True
-                )
-                update_forecast_entry(forecast_entry.id, update_request)
-                send_weather_notification({
-                    "emailId": userEmailId,
-                    "task_name": scheduleItem.title,
-                    "schedule_date_time": schedule_dt.strftime("%Y-%m-%dT%H:%M:%S"),
-                    "weather_status": f"{forecast_entry.weatherType}, {forecast_entry.weatherDescription}"
-                })
-                print("P 7" * 20)
-
-            else:
-                update_request = prepare_forcast_update_request_for_schedule_obj(
-                    current_time=current_time,
-                    existing_weather_forecast_data=forecast_entry,
-                    nextNotifyAt=notify_at,
-                    scheduledItem=scheduleItem,
-                    isNotifyAccountable=False
-                )
-                update_forecast_entry(forecast_entry.id, update_request)
-                print("P 8" * 20)
-
-    else:
-        # Create forecast entry
-        print("P 9" * 20)
-
-        time_diff = round(abs((revisedScheduleDateTime - current_time).total_seconds()) / DIVISOR)
-        assumed_notify_time = get_adjusted_time(current_time, time_diff)
-        print(f"assumed_notify_time: {assumed_notify_time}")
-        print(f"revisedScheduleDateTime: {revisedScheduleDateTime}")
-
-        if assumed_notify_time > revisedScheduleDateTime:
-            notifyTime = revisedScheduleDateTime - timedelta(minutes=5)
-        else:
-            notifyTime = assumed_notify_time
-
-
-        notifyIn = get_time_until_update(round(abs((notifyTime - current_time).total_seconds()) / DIVISOR))
-
-        requestBody = prepare_forcast_create_request(
-                weather_data= {
-                    "pincode": pincode,
-                    "unique_key": unique_key,
-                    "forecast_time": forecast_time.strftime("%Y-%m-%dT%H:%M:%S"),
-                    "timeStamp": matched_forecast["dt"],
-                    "weatherType": matched_forecast["weather"][0]["main"],
-                    "weatherDescription": matched_forecast["weather"][0]["description"],
-                    "temperature_celsius": matched_forecast["main"]["temp"],
-                    "humidity_percent": matched_forecast["main"]["humidity"],
-                    "scheduleItem": json.dumps(scheduleItem, cls=CustomJSONEncoder)
-                },
-                notifyTime=notifyTime,
-                notifyInTime=notifyIn
-            )
-        serializer = WeatherForecastSerializer(data=requestBody)
-        if serializer.is_valid():
-            serializer.save()
-
-        print("P 10" * 20)
-
-def perform(pincode, scheduleItem, userEmailId):
     DIVISOR = 3600
     ist = timezone("Asia/Kolkata")
     current_time = now()
@@ -440,15 +238,12 @@ def perform(pincode, scheduleItem, userEmailId):
     try:
         pincode_weather_data = get_object_or_404(WeatherPincodeMappedData, pincode=pincode)
 
-        print("P 1 (a)" * 20)
         if pincode_weather_data:
-            print("P 1 (b)" * 20)
 
             last_updated = datetime.fromisoformat(pincode_weather_data["last_updated"])
             last_updated = make_aware(last_updated) if is_naive(last_updated) else last_updated.astimezone(ist)
 
             time_diff = abs((last_updated - current_time).total_seconds()) / DIVISOR
-            print("P 1 (c)" * 20)
 
             if time_diff > 3:
                 request = {
@@ -461,13 +256,9 @@ def perform(pincode, scheduleItem, userEmailId):
                     serializer.save()
                     print("WeatherPincodeMappedData UPDATED")
                 else:
-                    print("INVALID WeatherPincodeMappedData")
-                print("P 1 (d)" * 20)
+                    print("INVALID WeatherPincodeMappedData aaaaaaaaaaaaa")
 
-            else:
-                print("P 1 (e)" * 20)
         else:
-            print("P 1 (f)" * 20)
             requestBody = {
                 "pincode": pincode,
                 "weather_data": weather_forecast_data,
@@ -478,11 +269,12 @@ def perform(pincode, scheduleItem, userEmailId):
                 serializer.save()
                 print("WeatherPincodeMappedData SAVED")
             else:
-                print("INVALID WeatherPincodeMappedData")
+                print("INVALID WeatherPincodeMappedData bbbbbbbbbbbb")
             #create_weather_data_for_pincode_entry(pincode, weather_forecast_data)
-            print("P 1 (g)" * 20)
-    except:
-        print("P 1 except (f)" * 20)
+    except Exception as e:
+
+        print("Exception: ", e)
+
         requestBody = {
             "pincode": pincode,
             "weather_data": weather_forecast_data,
@@ -493,11 +285,7 @@ def perform(pincode, scheduleItem, userEmailId):
             serializer.save()
             print("WeatherPincodeMappedData SAVED")
         else:
-            print("INVALID WeatherPincodeMappedData")
-
-        print("P 1 except (f) completed" * 20)
-
-    print("P 2" * 20)
+            print("INVALID WeatherPincodeMappedData ccccccccccc", serializer.errors)
 
     # 2. Parse schedule datetime
     schedule_items_date_time = scheduleItem.dateTime.astimezone(ist)
@@ -566,8 +354,7 @@ def perform(pincode, scheduleItem, userEmailId):
 
         existing_weather_forecast_data: WeatherForecast = WeatherForecast.objects.filter(
             unique_key=unique_key,
-            pincode=pincode,
-            forecast_time=forecast_time_ist,
+            pincode=pincode
         ).first()
 
         if existing_weather_forecast_data:
@@ -582,29 +369,48 @@ def perform(pincode, scheduleItem, userEmailId):
                     nextNotifyAt = nextNotifyAt.astimezone(ist)
 
                 isTimeToSendEmailWithUpdate = nextNotifyAt < current_time
-                print(
-                    f"💡 isTimeToSendEmailWithUpdate: {isTimeToSendEmailWithUpdate} | Time left : {abs(nextNotifyAt - current_time)}")
+                print("💡 isTimeToSendEmailWithUpdate:", isTimeToSendEmailWithUpdate, "| Time left:",
+                      abs(nextNotifyAt - current_time))
 
-                print(f"🟣 nextNotifyAt : {nextNotifyAt} | current_time : {current_time}")
-                print(f"🔵 nextNotifyAt : {nextNotifyAt} | revisedScheduleDateTime : {revisedScheduleDateTime}")
+                print("🟣 nextNotifyAt:", nextNotifyAt, "| current_time:", current_time)
+
+                print("🔵 nextNotifyAt:", nextNotifyAt, "| revisedScheduleDateTime:", revisedScheduleDateTime)
+
+                print("abs(nextNotifyAt - revisedScheduleDateTime).total_seconds():",
+                      abs(nextNotifyAt - revisedScheduleDateTime).total_seconds())
+
+                print("abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / 60 (Mins LEFT):",
+                      abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / 60)
+
+                print("💡 abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / 3600 (Hours LEFT):",
+                      abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / 3600)
+
+                time_diff = int(abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / DIVISOR)
+
+                if nextNotifyAt > revisedScheduleDateTime:
+                    print("ON UPDATE --- nextNotifyAt :", nextNotifyAt, "is GREATER THAN revisedScheduleDateTime :",
+                          revisedScheduleDateTime)
+                    notifyTime = revisedScheduleDateTime - timedelta(minutes=5)
+                    print("notify time will be less than 5 min before current time i.e", notifyTime)
+                    time_diff_for_notifyIn = abs(notifyTime - current_time).total_seconds() / DIVISOR
+
+                else:
+                    print("notify time will be nextNotifyAt:", nextNotifyAt)
+                    notifyTime = nextNotifyAt
+                    time_diff_for_notifyIn = time_diff
+
+                print("time_diff_for_notifyIn :", time_diff_for_notifyIn)
+
+                time_diff_for_notifyIn = round(time_diff_for_notifyIn)
+                print("time_diff_for_notifyIn round : ", time_diff_for_notifyIn)
 
                 if isTimeToSendEmailWithUpdate:
-                    print(
-                        f"abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() : {abs(nextNotifyAt - revisedScheduleDateTime).total_seconds()}")
-                    print(
-                        f"abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / 60 (Mins LEFT) : {abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / 60}")
-                    print(
-                        f"💡 abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / 3600 (Hours LEFT) : {abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / 3600}")
-                    time_diff = int(abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / DIVISOR)
-                    print(
-                        f"time_diff to calculate next nextNotifyAt variable value by comparing to revisedScheduleDateTime : {time_diff}")
-
                     update_request = prepare_forcast_update_request_scheduleItem_obj(
                         current_time=current_time,
                         existing_weather_forecast_data=existing_weather_forecast_data,
                         nextNotifyAt=nextNotifyAt,
                         scheduledItem=scheduleItem,
-                        time_diff=time_diff,
+                        time_diff=time_diff_for_notifyIn,
                         isNotifyAccountable=True
                     )
                     serializer = WeatherForecastSerializer(existing_weather_forecast_data, data=update_request,
@@ -623,13 +429,14 @@ def perform(pincode, scheduleItem, userEmailId):
                             request=emailRequestBody
                         )
                 else:
-                    print(f"UPDATE update_forecast_entry: isNotifyAccountable : false")
+                    print("UPDATE update_forecast_entry: isNotifyAccountable : false")
                     update_request = prepare_forcast_update_request_scheduleItem_obj(
                         current_time=current_time,
                         existing_weather_forecast_data=existing_weather_forecast_data,
                         nextNotifyAt=nextNotifyAt,
                         scheduledItem=scheduleItem,
-                        isNotifyAccountable=False
+                        isNotifyAccountable=True,
+                        time_diff=time_diff_for_notifyIn
                     )
                     serializer = WeatherForecastSerializer(existing_weather_forecast_data, data=update_request, partial=True)
                     if serializer.is_valid():
@@ -637,6 +444,63 @@ def perform(pincode, scheduleItem, userEmailId):
 
             else:
                 print("🔴 Next_notify_at is None. 🔴")
+                weather_data = {}
+                print("WHILE CREATE : revisedScheduleDateTime ->", revisedScheduleDateTime)
+                print("WHILE CREATE : current_time ->", current_time)
+
+                time_diff = abs((revisedScheduleDateTime - current_time).total_seconds()) / DIVISOR
+                print("WHILE CREATE : time_diff of abs((revisedScheduleDateTime - current_time) ->", time_diff)
+
+                time_diff = round(time_diff)
+                print("WHILE CREATE : round off time_diff of abs((revisedScheduleDateTime - current_time) ->",
+                      time_diff)
+
+                assumed_notify_time = get_adjusted_time(current_time, time_diff)
+                print("assumed_notify_time :", assumed_notify_time)
+
+                if assumed_notify_time is not None:
+                    if assumed_notify_time > revisedScheduleDateTime:
+                        print("assumed_notify_time :", assumed_notify_time, "is GREATER THAN revisedScheduleDateTime :",
+                              revisedScheduleDateTime)
+                        notifyTime = revisedScheduleDateTime - timedelta(minutes=5)
+                        print("notify time will be less than 5 min before current time i.e", notifyTime)
+                        time_diff_for_notifyIn = abs(notifyTime - current_time).total_seconds() / DIVISOR
+
+                    else:
+                        print("notify time will be assumed_notify_time:", assumed_notify_time)
+                        notifyTime = assumed_notify_time
+                        time_diff_for_notifyIn = time_diff
+
+                    print("time_diff_for_notifyIn :", time_diff_for_notifyIn)
+
+                    time_diff_for_notifyIn = round(time_diff_for_notifyIn)
+                    print("time_diff_for_notifyIn round : ", time_diff_for_notifyIn)
+
+                    requestBody = prepare_forcast_create_request(
+                        weather_data=weather_data,
+                        notifyTime=notifyTime,
+                        notifyInTime=get_time_until_update(time_diff_for_notifyIn)
+                    )
+                    serializer = WeatherForecastSerializer(existing_weather_forecast_data, data=requestBody,
+                                                           partial=True)
+                    if serializer.is_valid():
+                        serializer.save()
+                    else:
+                        print("serializer error 1 : ", serializer.errors)
+
+
+                else:
+                    requestBody = prepare_forcast_create_request(
+                        weather_data=weather_data,
+                        notifyTime=None,
+                        notifyInTime=None
+                    )
+                    serializer = WeatherForecastSerializer(existing_weather_forecast_data, data=requestBody,
+                                                           partial=True)
+                    if serializer.is_valid():
+                        serializer.save()
+                    else:
+                        print("serializer error 2 : ", serializer.errors)
 
 
         else:
@@ -652,33 +516,35 @@ def perform(pincode, scheduleItem, userEmailId):
                 "scheduleItem": json.dumps(scheduleItem, cls=CustomJSONEncoder)
             }
 
-            print(f"WHILE CREATE : revisedScheduleDateTime -> {revisedScheduleDateTime}")
-            print(f"WHILE CREATE : current_time -> {current_time}")
+            print("WHILE CREATE : revisedScheduleDateTime ->", revisedScheduleDateTime)
+            print("WHILE CREATE : current_time ->", current_time)
 
             time_diff = abs((revisedScheduleDateTime - current_time).total_seconds()) / DIVISOR
-            print(f"WHILE CREATE : time_diff of abs((revisedScheduleDateTime - current_time) -> {time_diff}")
+            print("WHILE CREATE : time_diff of abs((revisedScheduleDateTime - current_time) ->", time_diff)
+
             time_diff = round(time_diff)
-            print(f"WHILE CREATE : round off time_diff of abs((revisedScheduleDateTime - current_time) -> {time_diff}")
+            print("WHILE CREATE : round off time_diff of abs((revisedScheduleDateTime - current_time) ->", time_diff)
 
             assumed_notify_time = get_adjusted_time(current_time, time_diff)
-            print(f"assumed_notify_time : {assumed_notify_time}")
+            print("assumed_notify_time :", assumed_notify_time)
 
             if assumed_notify_time is not None:
                 if assumed_notify_time > revisedScheduleDateTime:
-                    print(
-                        f"assumed_notify_time : {assumed_notify_time} is GREATER THAN revisedScheduleDateTime : {revisedScheduleDateTime}")
+                    print("assumed_notify_time :", assumed_notify_time, "is GREATER THAN revisedScheduleDateTime :",
+                          revisedScheduleDateTime)
                     notifyTime = revisedScheduleDateTime - timedelta(minutes=5)
-                    print(f"notify time will be less than 5 min before current time i.e {notifyTime}")
+                    print("notify time will be less than 5 min before current time i.e", notifyTime)
                     time_diff_for_notifyIn = abs(notifyTime - current_time).total_seconds() / DIVISOR
 
                 else:
-                    print(f"notify time will be assumed_notify_time: {assumed_notify_time}")
+                    print("notify time will be assumed_notify_time:", assumed_notify_time)
                     notifyTime = assumed_notify_time
                     time_diff_for_notifyIn = time_diff
 
-                print(f"time_diff_for_notifyIn : {time_diff_for_notifyIn}")
+                print("time_diff_for_notifyIn :", time_diff_for_notifyIn)
+
                 time_diff_for_notifyIn = round(time_diff_for_notifyIn)
-                print(f"time_diff_for_notifyIn round : {time_diff_for_notifyIn}")
+                print("time_diff_for_notifyIn round : ", time_diff_for_notifyIn)
 
                 requestBody = prepare_forcast_create_request(
                         weather_data=weather_data,
