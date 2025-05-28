@@ -53,7 +53,7 @@ def send_email_anonymous(
 
 
 def send_email_otp_verification(email, otp, valid_msg):
-    subject = "Task Breeze Registration"
+    subject = "Schedify Registration"
     from_email = settings.EMAIL_HOST_USER
     to_email = [email]
 
