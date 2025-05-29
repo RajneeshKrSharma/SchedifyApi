@@ -238,3 +238,19 @@ def get_schedule_item_single_entry(key, token):
     except httpx.RequestError as e:
         print(f"❌ Request error: {e}")
         return None
+
+
+def send_weather_push_notification(request):
+    url = "http://127.0.0.1:8000/api/communication/send-weather-push-notify"
+    #print(f"request: {request}")
+    try:
+        response = httpx.post(url, json=request)
+        if response.status_code == 200:
+            print("✅ Push notification sent successfully!")
+            return response.json()
+        else:
+            print(f"⚠️ Failed to send push notification. Status: {response.status_code}")
+            return None
+    except httpx.RequestError as e:
+        print(f"❌ Request error: {e}")
+        return None

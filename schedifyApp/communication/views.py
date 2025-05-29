@@ -61,4 +61,25 @@ class SendWeatherNotificationAPIView(APIView):
         )
 
 
+class SendPushAPIView(APIView):
+    def post(self, request):
+        data = request.data
 
+        required_fields = ['title', 'body', 'channel', 'token', 'weather_image_url', 'uniqueId']
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            return Response({"error": f"Missing fields: {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            from schedifyApp.communication.push_notification import sendPush
+            sendPush(
+                title=data['title'],
+                body=data['body'],
+                channel=data['channel'],
+                token=data['token'],
+                weather_image_url=data['weather_image_url'],
+                uniqueId=data['uniqueId']
+            )
+            return Response({"message": "Push notification sent successfully"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

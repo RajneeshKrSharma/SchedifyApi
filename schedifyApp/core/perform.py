@@ -158,13 +158,14 @@ def format_datetime_or_none(dt):
     return dt.strftime("%Y-%m-%d %H:%M:%S") if dt is not None else None
 
 
-def prepare_forcast_create_request(weather_data, notifyTime, notifyInTime) -> dict:
+def prepare_forcast_create_request(weather_data, notifyTime, notifyInTime, notifyMedium=None) -> dict:
+    print(f"notifyMedium ---> {notifyMedium}")
     weather_data["updated_count"] = 1
     weather_data["next_notify_in"] = notifyInTime
     weather_data["notify_count"] = 0
     weather_data["next_notify_at"] = format_datetime_or_none(notifyTime)
     from schedifyApp.weather.models import NotifyMediumType
-    weather_data["notify_medium"] = NotifyMediumType.EMAIL.value
+    weather_data["notify_medium"] = notifyMedium if notifyMedium is not None else NotifyMediumType.EMAIL.name
 
     return weather_data
 

@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import WeatherForecast, WeatherPincodeMappedData, WeatherStatusImages
+from .models import WeatherForecast, WeatherPincodeMappedData, WeatherStatusImages, NotifyMediumType
 from .serializers import WeatherForecastSerializer, WeatherPincodeMappedDataSerializer, WeatherStatusImagesSerializer
 from ..CustomAuthentication import CustomAuthentication
 from ..address.models import Address
@@ -21,7 +21,7 @@ from ..core.perform import round_down_to_nearest_3hr, getTimeDelta, \
     prepare_forcast_update_request_for_schedule_obj
 from ..core.weather_utils import fetch_weather_data_by_pincode, update_weather_data_for_pincode_entry, \
     create_weather_data_for_pincode_entry, update_forecast_entry, send_weather_notification, create_forecast_entry, \
-    get_pincode_weather_data_single_entry, get_schedule_item_single_entry
+    get_pincode_weather_data_single_entry, get_schedule_item_single_entry, send_weather_push_notification
 from ..schedule_list.models import ScheduleItemList
 from ..schedule_list.serializers import ScheduleItemListSerializers
 
@@ -199,15 +199,17 @@ class WeatherStatus(APIView):
     def get(self, request):
         scheduledItemId = request.query_params.get('scheduledItemId')
         pincode = request.query_params.get('pincode')
+        notifyMedium = request.query_params.get('notifyMedium')
 
         user = request.user
         user_id = user.emailIdLinked_id
         userEmailId = request.user.emailIdLinked.emailId
+        fcmToken = request.user.emailIdLinked.fcmToken
 
         user_scheduled_object = get_object_or_404(ScheduleItemList, user_id=user_id, id=scheduledItemId)
 
         if user_scheduled_object is not None:
-            perform(pincode, user_scheduled_object, userEmailId)
+            perform(pincode, user_scheduled_object, userEmailId, fcmToken, notifyMedium)
 
             weather_item_obj = WeatherForecast.objects.filter(scheduleItem=user_scheduled_object)
             weather_status_images = WeatherStatusImages.objects.all()
@@ -222,8 +224,11 @@ class WeatherStatus(APIView):
             return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
+def get_weather_image_by_partial_status(partial_status: str) -> WeatherStatusImages | None:
+    return WeatherStatusImages.objects.filter(status__icontains=partial_status.upper()).first()
 
-def perform(pincode, scheduleItem, userEmailId):
+
+def perform(pincode, scheduleItem, userEmailId, fcmToken, notifyMedium):
     DIVISOR = 3600
     ist = timezone("Asia/Kolkata")
     current_time = now()
@@ -403,15 +408,38 @@ def perform(pincode, scheduleItem, userEmailId):
                         serializer.save()
 
                         print("Proceed to send email =>")
-                        emailRequestBody = {
-                            "emailId": userEmailId,
-                            "task_name": scheduleItem.title,
-                            "schedule_date_time": schedule_items_date_time.strftime("%Y-%m-%dT%H:%M:%S"),
-                            "weather_status": f"{existing_weather_forecast_data.weatherType}, {existing_weather_forecast_data.weatherDescription}"
-                        }
-                        send_weather_notification(
-                            request=emailRequestBody
-                        )
+                        if existing_weather_forecast_data.notify_medium == NotifyMediumType.EMAIL.name:
+                            emailRequestBody = {
+                                "emailId": userEmailId,
+                                "task_name": scheduleItem.title,
+                                "schedule_date_time": schedule_items_date_time.strftime("%d %b, %Y %I:%M %p"),
+                                "weather_status": f"{existing_weather_forecast_data.weatherType}, {existing_weather_forecast_data.weatherDescription}"
+                            }
+                            send_weather_notification(
+                                request=emailRequestBody
+                            )
+                        elif existing_weather_forecast_data.notify_medium == NotifyMediumType.PUSH_NOTIFICATION.name:
+                            try:
+                                print(f"existing_weather_forecast_data.weatherType: {existing_weather_forecast_data.weatherType}")
+
+                                getWeatherImageUrl = get_weather_image_by_partial_status(existing_weather_forecast_data.weatherType).url
+                                print(f"existing_weather_forecast_data.weatherType : {existing_weather_forecast_data.weatherType} | getWeatherImageUrl : {getWeatherImageUrl}")
+                                requestBody = {
+                                    "title": f"{existing_weather_forecast_data.weatherType} Alert!",
+                                    "body": f"{existing_weather_forecast_data.weatherType}, {existing_weather_forecast_data.weatherDescription} "
+                                            f"is expected in your area, You have scheduled item {scheduleItem.title} for on {schedule_items_date_time.strftime("%d %b, %Y %I:%M %p")}",
+                                    "channel": "ALERT",
+                                    "token": fcmToken,
+                                    "weather_image_url": getWeatherImageUrl,
+                                    "uniqueId": existing_weather_forecast_data.unique_key
+                                }
+                                send_weather_push_notification(
+                                    request=requestBody
+                                )
+                            except Exception as e:
+                                print("⛔ Error while sending push notification:", e)
+
+
                 else:
                     print("UPDATE update_forecast_entry: isNotifyAccountable : false")
                     update_request = prepare_forcast_update_request_scheduleItem_obj(
@@ -475,7 +503,8 @@ def perform(pincode, scheduleItem, userEmailId):
                 requestBody = prepare_forcast_create_request(
                         weather_data=weather_data,
                         notifyTime=notifyTime,
-                        notifyInTime=get_time_until_update(time_diff_for_notifyIn)
+                        notifyInTime=get_time_until_update(time_diff_for_notifyIn),
+                        notifyMedium=notifyMedium
                     )
                 serializer = WeatherForecastSerializer(data=requestBody)
                 if serializer.is_valid():

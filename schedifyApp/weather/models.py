@@ -14,7 +14,7 @@ class FileAsset(models.Model):
 
 
 class NotifyMediumType(Enum):
-    PUSH_NOTIFICATION = 'PUSH NOTIFICATION'
+    PUSH_NOTIFICATION = 'PUSH_NOTIFICATION'
     EMAIL = 'EMAIL'
 
     @classmethod
