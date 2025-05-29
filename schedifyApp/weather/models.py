@@ -56,14 +56,14 @@ class WeatherPincodeMappedData(models.Model):
 
 class WeatherStatusImages(models.Model):
     class WeatherStatus(models.TextChoices):
-        SUNNY = 'SUNNY', 'Sunny'
-        CLOUDY = 'CLOUDY', 'Cloudy'
-        RAINY = 'RAINY', 'Rainy'
-        STORMY = 'STORMY', 'Stormy'
-        SNOWY = 'SNOWY', 'Snowy'
-        FOGGY = 'FOGGY', 'Foggy'
-        DRIZZLY = 'DRIZZLY', 'Drizzly'
-        THUNDERY = 'THUNDERY', 'Thundery'
+        SUNNY = 'CLEAR', 'CLEAR'
+        CLOUDY = 'CLOUD', 'Cloud'
+        RAINY = 'RAIN', 'Rain'
+        STORMY = 'STORM', 'Storm'
+        SNOWY = 'SNOW', 'Snow'
+        FOGGY = 'FOGG', 'Fogg'
+        DRIZZLY = 'DRIZZLE', 'Drizzle'
+        THUNDERY = 'THUNDER', 'Thunder'
 
     url = models.URLField(max_length=500)
     status = models.CharField(max_length=20, choices=WeatherStatus.choices)

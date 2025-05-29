@@ -225,7 +225,12 @@ class WeatherStatus(APIView):
 
 
 def get_weather_image_by_partial_status(partial_status: str) -> WeatherStatusImages | None:
-    return WeatherStatusImages.objects.filter(status__icontains=partial_status.upper()).first()
+    partial_status_upper = partial_status.upper()
+    for image in WeatherStatusImages.objects.all():
+        if image.status.upper() in partial_status_upper:
+            return image
+    return None
+
 
 
 def perform(pincode, scheduleItem, userEmailId, fcmToken, notifyMedium):
