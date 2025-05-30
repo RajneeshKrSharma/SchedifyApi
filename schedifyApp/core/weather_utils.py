@@ -241,7 +241,7 @@ def get_schedule_item_single_entry(key, token):
 
 
 def send_weather_push_notification(request):
-    url = "http://127.0.0.1:8000/api/communication/send-weather-push-notify"
+    url = "https://schedify.pythonanywhere.com/api/communication/send-weather-push-notify"
     #print(f"request: {request}")
     try:
         response = httpx.post(url, json=request)

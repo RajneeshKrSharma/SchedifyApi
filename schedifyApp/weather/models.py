@@ -61,7 +61,7 @@ class WeatherStatusImages(models.Model):
         RAINY = 'RAIN', 'Rain'
         STORMY = 'STORM', 'Storm'
         SNOWY = 'SNOW', 'Snow'
-        FOGGY = 'FOGG', 'Fogg'
+        FOGGY = 'FOG', 'Fog'
         DRIZZLY = 'DRIZZLE', 'Drizzle'
         THUNDERY = 'THUNDER', 'Thunder'
 

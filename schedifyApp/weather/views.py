@@ -432,7 +432,7 @@ def perform(pincode, scheduleItem, userEmailId, fcmToken, notifyMedium):
                                 requestBody = {
                                     "title": f"{existing_weather_forecast_data.weatherType} Alert!",
                                     "body": f"{existing_weather_forecast_data.weatherType}, {existing_weather_forecast_data.weatherDescription} "
-                                            f"is expected in your area, You have scheduled item {scheduleItem.title} for on {schedule_items_date_time.strftime("%d %b, %Y %I:%M %p")}",
+                                            f"is expected in your area,  {scheduleItem.title} was scheduled for {schedule_items_date_time.strftime("%d %b, %Y %I:%M %p")}",
                                     "channel": "ALERT",
                                     "token": fcmToken,
                                     "weather_image_url": getWeatherImageUrl,
