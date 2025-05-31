@@ -27,18 +27,25 @@ from ..schedule_list.serializers import ScheduleItemListSerializers
 
 
 class WeatherForecastAPIView(APIView):
+    authentication_classes = [CustomAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        expired_param = request.query_params.get('expired')
-        forecasts = WeatherForecast.objects.all()
+        user = request.user
+        current_time = now()
 
-        if expired_param == "false":
-            current_time = now()
-            forecasts = forecasts.filter(
-                scheduleItem__dateTime__gt=current_time,
-                isActive=True,
-                scheduleItem__isWeatherNotifyEnabled=True
-            )
+        user_scheduled_objects = ScheduleItemList.objects.filter(
+            user_id=user.emailIdLinked_id,
+            dateTime__gt=current_time,
+        )
+
+        pincode = request.query_params.get('pincode')
+
+        forecasts = WeatherForecast.objects.filter(
+            scheduleItem__in=user_scheduled_objects,
+            pincode = pincode,
+            scheduleItem__isWeatherNotifyEnabled=True
+        )
 
         serializer = WeatherForecastSerializer(forecasts, many=True)
         return Response(serializer.data)
