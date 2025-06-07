@@ -139,10 +139,22 @@ class AppUpdateInfoAdmin(admin.ModelAdmin):
 class AppTourInfoAdmin(admin.ModelAdmin):
     list_display = ('id', 'title', 'subtitle', 'image')
 
+@admin.register(HomeCarouselBanner)
+class HomeCarouselBannerAdmin(admin.ModelAdmin):
+    list_display = ['title', 'subtitle', 'image_url', 'background_gradient_colors']
+    search_fields = ['title', 'subtitle']
+
+
+# Admin for HomeCellDetails
+@admin.register(HomeCellDetails)
+class HomeCellDetailsAdmin(admin.ModelAdmin):
+    list_display = ['title', 'image_url', 'description', 'title_color', 'background_gradient_colors']
+    search_fields = ['title', 'description']
+
 @admin.register(AppDetails)
 class AppDetailsAdmin(admin.ModelAdmin):
     list_display = ('id', 'app_specific_details', 'app_update_info')
-    filter_horizontal = ('app_tour_info',)
+    filter_horizontal = ('app_tour_info', 'home_carousel_banners', 'home_cell_details')
 
 @admin.register(MyModel)
 class MyModelAdmin(admin.ModelAdmin):
@@ -160,10 +172,19 @@ class WeatherNotificationInline(admin.TabularInline):
     model = WeatherNotification
     extra = 1  # Number of extra empty forms in the admin panel
 
-# Admin for AppData
 @admin.register(PostLoginAppData)
 class PostLoginAppDataAdmin(admin.ModelAdmin):
-    list_display = ['id', 'bottom_nav_option', 'weather_notification']
+    list_display = ['id', 'get_bottom_nav_options', 'get_weather_notifications', 'address_detail']
+
+    def get_bottom_nav_options(self, obj):
+        return ", ".join([str(option.title) for option in obj.bottom_nav_option.all()])
+    get_bottom_nav_options.short_description = 'Bottom Nav Options'
+
+    def get_weather_notifications(self, obj):
+        return ", ".join([str(notif.info) for notif in obj.weather_notification.all()])
+    get_weather_notifications.short_description = 'Weather Notifications'
+    filter_horizontal = ('bottom_nav_option', 'weather_notification')
+
 
 # Optional: Register the related models if needed
 @admin.register(BottomNavOption)

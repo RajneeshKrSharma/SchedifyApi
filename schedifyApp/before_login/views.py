@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import AppDetails
@@ -15,7 +15,7 @@ class AppDetailsViewSet(viewsets.ModelViewSet):
         """
         queryset = self.get_queryset()
         if not queryset.exists():
-            return Response({"detail": "No AppDetails available."}, status=404)
+            return Response({"detail": []}, status=status.HTTP_200_OK)
 
         # Use the first object in the queryset
         instance = queryset.first()

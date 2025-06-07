@@ -1,5 +1,7 @@
 from django.db import models
 
+from schedifyApp.address.models import Address
+
 class BottomNavOption(models.Model):
     title = models.CharField(max_length=255, blank=True, null=True)
     subtitle = models.CharField(max_length=255, blank=True, null=True)
@@ -20,16 +22,20 @@ class WeatherNotification(models.Model):
 
 
 class PostLoginAppData(models.Model):
-    bottom_nav_option = models.ForeignKey(
+    bottom_nav_option = models.ManyToManyField(
         BottomNavOption,
-        on_delete=models.CASCADE,
-        related_name="post_login_app_data"
+        related_name="post_login_app_data",
+        blank=True
     )
-    weather_notification = models.ForeignKey(
+    weather_notification = models.ManyToManyField(
         WeatherNotification,
-        on_delete=models.CASCADE,
-        related_name="post_login_app_data"
+        related_name="post_login_app_data",
+        blank=True
     )
-
-    def __str__(self):
-        return f"PostLoginAppData {self.id}"
+    address_detail = models.ForeignKey(
+        Address,
+        on_delete=models.CASCADE,
+        related_name="address_detail",
+        blank=True,
+        null=True
+    )
