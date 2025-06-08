@@ -32,10 +32,3 @@ class PostLoginAppData(models.Model):
         related_name="post_login_app_data",
         blank=True
     )
-    address_detail = models.ForeignKey(
-        Address,
-        on_delete=models.CASCADE,
-        related_name="address_detail",
-        blank=True,
-        null=True
-    )

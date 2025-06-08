@@ -174,7 +174,7 @@ class WeatherNotificationInline(admin.TabularInline):
 
 @admin.register(PostLoginAppData)
 class PostLoginAppDataAdmin(admin.ModelAdmin):
-    list_display = ['id', 'get_bottom_nav_options', 'get_weather_notifications', 'address_detail']
+    list_display = ['id', 'get_bottom_nav_options', 'get_weather_notifications']
 
     def get_bottom_nav_options(self, obj):
         return ", ".join([str(option.title) for option in obj.bottom_nav_option.all()])

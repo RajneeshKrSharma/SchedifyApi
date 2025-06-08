@@ -47,7 +47,7 @@ class WeatherForecast(models.Model):
 
 class WeatherPincodeMappedData(models.Model):
     pincode = models.CharField(max_length=6, unique=True)
-    weather_data = models.JSONField(default={})
+    weather_data = models.JSONField(default=dict)
     last_updated = models.DateTimeField(auto_now=True)
     updated_count = models.IntegerField(default=0)
 
