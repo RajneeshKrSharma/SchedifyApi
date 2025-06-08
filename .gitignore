@@ -1,0 +1,8 @@
+# Ignore Python bytecode
+__pycache__/
+*.py[cod]
+
+# Ignore SQLite database
+db.sqlite3
+
+schedify_fb.json
