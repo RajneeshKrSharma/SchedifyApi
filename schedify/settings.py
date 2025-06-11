@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-kmfy0yzvl$ky!iw$z++e0$(r-4-xw(gk53)0glmbl+ngq%0h@i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '10.0.2.2', '127.0.0.1', 'schedify.pythonanywhere.com']
+ALLOWED_HOSTS = ['10.0.2.2', '127.0.0.1', 'schedify.pythonanywhere.com']
 
 dotenv_path = "/home/Schedify/.env"
 load_dotenv(dotenv_path)
