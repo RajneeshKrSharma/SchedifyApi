@@ -55,17 +55,11 @@ class Collaborator(models.Model):
         verbose_name="Email Address"
     )
 
-    requested_payment_qr_url = models.URLField(null=True, blank=True)
-
-    redirect_upi_url = models.URLField(null=True, blank=True)
-
     status = models.CharField(
         max_length=10,
         choices=CollaboratorStatus.choices,
         default=CollaboratorStatus.PENDING
     )
-    settle_modes = models.JSONField(default=list, blank=True)
-    settle_mediums = models.JSONField(default=list, blank=True)
 
     objects = models.Manager()
 

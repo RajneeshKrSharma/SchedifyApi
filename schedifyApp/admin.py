@@ -214,7 +214,6 @@ class CollaboratorDetailAdmin(admin.ModelAdmin):
         'collab_user__mobile_number',
         'collab_google_auth_user__username',
         'group__grp_name',
-        'settle_mode', 'settle_medium',
     )
 
 
@@ -244,18 +243,12 @@ class CollaboratorAdmin(admin.ModelAdmin):
         'created_on',
         'isActive',
         'collabEmailId',
-        'status',
-        'settle_modes',
-        'settle_mediums',
-        'requested_payment_qr_url',
-        'redirect_upi_url',
+        'status'
     )
     list_filter = (
         'groupId',
         'createdBy',
         'status',
-        'settle_modes',
-        'settle_mediums',
         'isActive',
     )
 

@@ -245,6 +245,36 @@ class CollaboratorAPIView(APIView):
         return Response({"detail": "Collaborator deleted."}, status=status.HTTP_200_OK)
 
 
+def _create_single_expense(data):
+    data["eAmt"] = data.get("eRawAmt")
+    serializer = ExpenseSerializer(data=data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def _create_multiple_expenses(base_data, collaborators):
+    created_expenses = []
+    total = collaborators.count()
+
+    for collab in collaborators:
+        entry = base_data.copy()
+        entry["expenseForCollaborator"] = collab.id
+
+        if base_data.get("eExpenseType") == "shared-equally":
+            entry["eAmt"] = (Decimal(base_data["eRawAmt"]) / total).quantize(Decimal('.01'), rounding=ROUND_DOWN)
+
+        serializer = ExpenseSerializer(data=entry)
+        if serializer.is_valid():
+            expense = serializer.save()
+            created_expenses.append(ExpenseSerializer(expense).data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(created_expenses, status=status.HTTP_201_CREATED)
+
+
 class ExpenseAPIView(APIView):
 
     def get(self, request):
@@ -298,7 +328,7 @@ class ExpenseAPIView(APIView):
             return Response({'error': 'Invalid group or collaborator'}, status=status.HTTP_400_BAD_REQUEST)
 
         expense_type = data.get('eExpenseType')
-        e_raw_amt = data.get('eAmt')
+        e_raw_amt = data.get('eRawAmt')
         data["addedByCollaboratorId"] = added_by.id  # ensure consistency
         eCreationId = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
         data["eCreationId"] = eCreationId
@@ -306,51 +336,90 @@ class ExpenseAPIView(APIView):
 
         if expense_type == "self":
             data["expenseForCollaborator"] = added_by.id
-            return self._create_single_expense(data)
+            return _create_single_expense(data)
 
         elif expense_type in ["shared-equally", "custom-split"]:
             collaborators = Collaborator.objects.filter(groupId=group)
-            return self._create_multiple_expenses(data, collaborators)
+            return _create_multiple_expenses(data, collaborators)
 
         return Response({'error': 'Invalid expense type'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def _create_single_expense(self, data):
-        serializer = ExpenseSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def patch(self, request):
+        e_creation_id = request.query_params.get('eCreationId')
+        data = request.data.copy()
 
-    def _create_multiple_expenses(self, base_data, collaborators):
-        created_expenses = []
-        total = collaborators.count()
+        try:
+            group = Group.objects.get(id=data.get('groupId'))
+            added_by = Collaborator.objects.get(id=data.get('addedByCollaboratorId'), groupId=group)
+        except (Group.DoesNotExist, Collaborator.DoesNotExist):
+            return Response({'error': 'Invalid group or collaborator'}, status=status.HTTP_400_BAD_REQUEST)
 
-        for collab in collaborators:
-            entry = base_data.copy()
-            entry["expenseForCollaborator"] = collab.id
+        expenses = Expense.objects.filter(eCreationId=e_creation_id)
+        if not expenses.exists():
+            return Response({'error': 'Expense not found'}, status=status.HTTP_404_NOT_FOUND)
 
-            if base_data.get("eExpenseType") == "shared-equally":
-                entry["eAmt"] = (Decimal(base_data["eAmt"]) / total).quantize(Decimal('.01'), rounding=ROUND_DOWN)
+        expense_type = data.get('eExpenseType')
+        e_raw_amt = Decimal(data.get('eRawAmt'))
+        data["eRawAmt"] = e_raw_amt
 
-            serializer = ExpenseSerializer(data=entry)
+        if expense_type == "self":
+            # Only one record should be updated
+            expense = expenses.first()
+            data["expenseForCollaborator"] = added_by.id
+            serializer = ExpenseSerializer(expense, data=data, partial=True)
             if serializer.is_valid():
-                expense = serializer.save()
-                created_expenses.append(ExpenseSerializer(expense).data)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(created_expenses, status=status.HTTP_201_CREATED)
+        elif expense_type == "shared-equally":
+            collaborators = Collaborator.objects.filter(groupId=group).order_by("id")
+            expenses = expenses.order_by("expenseForCollaborator__id")
 
-    def patch(self, request, expense_id):
-        expense = get_object_or_404(Expense, id=expense_id)
-        serializer = ExpenseSerializer(expense, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if collaborators.count() != expenses.count():
+                return Response(
+                    {"error": "Collaborators and expenses count mismatch. Cannot perform update safely."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-    def delete(self, request, expense_id):
-        expense = get_object_or_404(Expense, id=expense_id)
-        expense.delete()
-        return Response({"detail": "Expense deleted successfully."}, status=status.HTTP_200_OK)
+            total = collaborators.count()
+            updated_expenses = []
 
+            for collab, expense in zip(collaborators, expenses):
+                updated_data = data.copy()
+                updated_data["expenseForCollaborator"] = collab.id
+                updated_data["eAmt"] = (e_raw_amt / total).quantize(Decimal('.01'), rounding=ROUND_DOWN)
+
+                serializer = ExpenseSerializer(expense, data=updated_data, partial=True)
+                if serializer.is_valid():
+                    updated = serializer.save()
+                    updated_expenses.append(ExpenseSerializer(updated).data)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response(updated_expenses, status=status.HTTP_200_OK)
+
+        return Response({'error': 'Invalid expense type'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        eCreationId = request.query_params.get('eCreationId')
+
+        if not eCreationId:
+            return Response({"error": "eCreationId is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        expense = Expense.objects.filter(eCreationId=eCreationId).first()
+        if not expense:
+            return Response({"error": "Expense not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        expense_type = expense.eExpenseType
+
+        if expense_type in [ExpenseType.SHARED_EQUALLY.value, ExpenseType.CUSTOM_SPLIT.value]:
+            deleted_count, _ = Expense.objects.filter(eCreationId=eCreationId).delete()
+            return Response(
+                {"detail": f"Group expense deleted successfully ({deleted_count} items)."},
+                status=status.HTTP_200_OK
+            )
+        else:
+            # Delete only the single expense (SELF)
+            expense.delete()
+            return Response({"detail": "Expense deleted successfully."}, status=status.HTTP_200_OK)

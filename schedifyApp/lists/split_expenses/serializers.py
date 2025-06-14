@@ -46,10 +46,6 @@ class CollaboratorSerializer(serializers.ModelSerializer):
             'isActive',
             'collabEmailId',
             'status',  # read-only
-            'settle_modes',
-            'settle_mediums',
-            'requested_payment_qr_url',
-            'redirect_upi_url',
             'expenses',
         ]
 
