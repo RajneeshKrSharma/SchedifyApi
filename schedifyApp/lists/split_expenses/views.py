@@ -13,6 +13,8 @@ from schedifyApp.lists.split_expenses.serializers import GroupSerializer, Collab
 from schedifyApp.login.models import EmailIdRegistration
 from .models import Group, Collaborator, Expense, ExpenseType
 from .serializers import ExpenseSerializer
+from ...communication.push_notification import sendSplitExpensePush
+
 
 class GroupAPIView(APIView):
     """
@@ -183,7 +185,25 @@ class CollaboratorAPIView(APIView):
 
         serializer = CollaboratorSerializer(data=data)
         if serializer.is_valid():
-            collaborator = serializer.save()
+            serializer.save()
+
+            collaboratorsDetails = Collaborator.objects.filter(
+                createdBy=linked_user_id,
+                collabUserId__isnull=False
+            ).select_related('collabUserId')
+
+            fcm_tokens = list(set(
+                collab.collabUserId.fcmToken for collab in collaboratorsDetails if collab.collabUserId.fcmToken
+            ))
+
+            print("fcm_tokens : ", fcm_tokens)
+
+            sendSplitExpensePush(
+                title=f"{email.split("@")[0]}, New Collab. Added",
+                body="Please check your collab section",
+                tokens=fcm_tokens
+            )
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -211,6 +231,28 @@ class CollaboratorAPIView(APIView):
         serializer = CollaboratorSerializer(collaborator, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+
+            data = request.data.copy()
+
+            emailId = Collaborator.objects.filter(createdBy=linked_user_id).first().createdBy.emailId
+
+            collaboratorsDetails = Collaborator.objects.filter(
+                createdBy=linked_user_id,
+                collabUserId__isnull=False
+            ).select_related('collabUserId')
+
+            fcm_tokens = list(set(
+                collab.collabUserId.fcmToken for collab in collaboratorsDetails if collab.collabUserId.fcmToken
+            ))
+
+            print("fcm_tokens : ", fcm_tokens)
+
+            sendSplitExpensePush(
+                title=f"{emailId.split("@")[0]}, collab. changed to {data.get('collaboratorName')}",
+                body="Please check your collab section",
+                tokens=fcm_tokens
+            )
+
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -241,6 +283,23 @@ class CollaboratorAPIView(APIView):
             print("expenses: ", all_related_expenses)
             all_related_expenses.delete()
 
+        emailId = Collaborator.objects.filter(createdBy=linked_user_id).first().createdBy.emailId
+        collaboratorsDetails = Collaborator.objects.filter(
+            createdBy=linked_user_id,
+            collabUserId__isnull=False
+        ).select_related('collabUserId')
+
+        fcm_tokens = list(set(
+            collab.collabUserId.fcmToken for collab in collaboratorsDetails if collab.collabUserId.fcmToken
+        ))
+
+        print("fcm_tokens : ", fcm_tokens)
+
+        sendSplitExpensePush(
+            title=f"{emailId.split("@")[0]} collab deleted",
+            body="Please check your collab section",
+            tokens=fcm_tokens
+        )
         collaborator.delete()
         return Response({"detail": "Collaborator deleted."}, status=status.HTTP_200_OK)
 

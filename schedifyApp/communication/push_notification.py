@@ -22,3 +22,30 @@ def sendPush(title, body, channel, token, weather_image_url, uniqueId):
 
     response = messaging.send_each_for_multicast(message)
     print('Successfully sent message:', response)
+
+
+def sendSplitExpensePush(title, body, tokens):
+    # Ensure tokens is a list
+    if isinstance(tokens, str):
+        tokens = [tokens]
+
+    # Avoid sending if token list is empty
+    if not tokens:
+        print("No tokens provided.")
+        return
+
+    message = messaging.MulticastMessage(
+        data={
+            'body': body,
+            'title': title,
+            'weather_image_url': "https://schedify.pythonanywhere.com/media/pictures/collaborator_image.png",
+            'uniqueId': "XI0234BH",
+            'channel': "ALERT",
+            'displayNotification': 'YES'
+        },
+        tokens=tokens
+    )
+
+    # Send and log result
+    response = messaging.send_each_for_multicast(message)
+    print(f'Successfully sent message to {len(response.responses)} recipients.')
