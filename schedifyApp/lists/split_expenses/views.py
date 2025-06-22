@@ -199,7 +199,7 @@ class CollaboratorAPIView(APIView):
             print("fcm_tokens : ", fcm_tokens)
 
             sendSplitExpensePush(
-                title=f"{email.split("@")[0]}, New Collab. Added",
+                title=f"{email.split("@")[0]}, A new collaborator added !",
                 body="Please check your collab section",
                 tokens=fcm_tokens
             )
@@ -296,7 +296,7 @@ class CollaboratorAPIView(APIView):
         print("fcm_tokens : ", fcm_tokens)
 
         sendSplitExpensePush(
-            title=f"{emailId.split("@")[0]} collab deleted",
+            title=f"{emailId.split("@")[0]} collab deleted !",
             body="Please check your collab section",
             tokens=fcm_tokens
         )
