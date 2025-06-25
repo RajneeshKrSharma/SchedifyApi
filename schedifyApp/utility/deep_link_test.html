@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Open App via Deep Link</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    input, button {
+      font-size: 16px;
+      padding: 10px;
+      margin-top: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Open App using Deep Link</h2>
+    <input type="text" id="deepLinkInput" placeholder="Enter deep link (e.g. myapp://open)">
+    <button onclick="openApp()">Open App</button>
+  </div>
+
+  <script>
+    function openApp() {
+      const deepLink = document.getElementById('deepLinkInput').value.trim();
+      if (!deepLink) {
+        alert("Please enter a valid deep link URL.");
+        return;
+      }
+
+      const start = Date.now();
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.src = deepLink;
+      document.body.appendChild(iframe);
+
+      setTimeout(() => {
+        const end = Date.now();
+        const elapsed = end - start;
+
+        if (elapsed < 2000) {
+          alert("App not installed or deep link not handled.");
+        }
+
+        document.body.removeChild(iframe);
+      }, 1500);
+    }
+  </script>
+</body>
+</html>
