@@ -14,6 +14,9 @@ from schedifyApp.login.models import EmailIdRegistration
 from .models import Group, Collaborator, Expense, ExpenseType
 from .serializers import ExpenseSerializer
 from ...communication.push_notification import sendSplitExpensePush
+from ...communication.utils import ExpenseActionType, \
+    CollaboratorActionType, _prepare_push_notify_title_msg, _prepare_push_notify_body_msg_for_collaborator, \
+    _prepare_push_notify_body_msg_for_expense
 
 
 class GroupAPIView(APIView):
@@ -187,6 +190,7 @@ class CollaboratorAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
 
+            addedByCollaborator_EmailId = Collaborator.objects.filter(createdBy=linked_user_id).first().createdBy.emailId
             collaboratorsDetails = Collaborator.objects.filter(
                 createdBy=linked_user_id,
                 collabUserId__isnull=False
@@ -199,9 +203,15 @@ class CollaboratorAPIView(APIView):
             print("fcm_tokens : ", fcm_tokens)
 
             sendSplitExpensePush(
-                title=f"{email.split("@")[0]}, A new collaborator added !",
-                body="Please check your collab section",
-                tokens=fcm_tokens
+                title=_prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_CREATION),
+                body= _prepare_push_notify_body_msg_for_collaborator(
+                    action=CollaboratorActionType.COLLABORATOR_CREATION,
+                    group= Group.objects.get(id=group_id),
+                    collaboratorEmailId=email,
+                    collaboratorAddedByEmailId=addedByCollaborator_EmailId
+                ),
+                tokens=fcm_tokens,
+                pushNotificationType=CollaboratorActionType.COLLABORATOR_CREATION
             )
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -220,11 +230,10 @@ class CollaboratorAPIView(APIView):
 
         collaborator = get_object_or_404(Collaborator, id=collaborator_id)
         print(f"collaborator : {collaborator}")
-        print(f"collaborator.createdBy : {collaborator.createdBy_id}")
-        print(f"collaborator.collabUserId : {collaborator.collabUserId_id}")
         print(f"linked_user_id : {linked_user_id}")
+        print(f"collaborator.createdBy : {collaborator.createdBy_id}")
         # Optional: Only allow patch if the requesting user is creator
-        if collaborator.collabUserId_id != linked_user_id:
+        if collaborator.createdBy_id != linked_user_id:
             return Response({"detail": "You do not have permission to update this collaborator."},
                             status=status.HTTP_403_FORBIDDEN)
 
@@ -248,9 +257,15 @@ class CollaboratorAPIView(APIView):
             print("fcm_tokens : ", fcm_tokens)
 
             sendSplitExpensePush(
-                title=f"{emailId.split("@")[0]}, collab. changed to {data.get('collaboratorName')}",
-                body="Please check your collab section",
-                tokens=fcm_tokens
+                title= _prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_UPDATION),
+                body= _prepare_push_notify_body_msg_for_collaborator(
+                    action=CollaboratorActionType.COLLABORATOR_UPDATION,
+                    group=Group.objects.get(id=collaborator.groupId_id),
+                    collaboratorUpdatedByEmailId=emailId,
+                    renamedClbName=data.get('collaboratorName')
+                ),
+                tokens=fcm_tokens,
+                pushNotificationType=CollaboratorActionType.COLLABORATOR_UPDATION
             )
 
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -294,11 +309,18 @@ class CollaboratorAPIView(APIView):
         ))
 
         print("fcm_tokens : ", fcm_tokens)
+        print("collabEmailId : ", collaborator.collabEmailId)
 
         sendSplitExpensePush(
-            title=f"{emailId.split("@")[0]} collab deleted !",
-            body="Please check your collab section",
-            tokens=fcm_tokens
+            title= _prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_DELETION),
+            body=_prepare_push_notify_body_msg_for_collaborator(
+                action=CollaboratorActionType.COLLABORATOR_DELETION,
+                group=Group.objects.get(id=collaborator.groupId_id),
+                collaboratorEmailId=collaborator.collabEmailId,
+                deletedByEmailId=emailId
+            ),
+            tokens=fcm_tokens,
+            pushNotificationType=CollaboratorActionType.COLLABORATOR_DELETION
         )
         collaborator.delete()
         return Response({"detail": "Collaborator deleted."}, status=status.HTTP_200_OK)
@@ -307,18 +329,21 @@ class CollaboratorAPIView(APIView):
 def _create_single_expense(data):
     data["eAmt"] = data.get("eRawAmt")
     serializer = ExpenseSerializer(data=data)
+
+
+
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def _create_multiple_expenses(base_data, collaborators):
+def _create_multiple_expenses(base_data, collaborators, added_by, group, linked_user_id):
     created_expenses = []
     total = collaborators.count()
-
+    entry = base_data.copy()
     for collab in collaborators:
-        entry = base_data.copy()
+
         entry["expenseForCollaborator"] = collab.id
 
         if base_data.get("eExpenseType") == "shared-equally":
@@ -331,10 +356,33 @@ def _create_multiple_expenses(base_data, collaborators):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    collaboratorsDetails = Collaborator.objects.filter(
+        createdBy=linked_user_id,
+        collabUserId__isnull=False
+    ).select_related('collabUserId')
+
+    fcm_tokens = list(set(
+        collab.collabUserId.fcmToken for collab in collaboratorsDetails if collab.collabUserId.fcmToken
+    ))
+
+    print("fcm_tokens : ", fcm_tokens)
+
+    sendSplitExpensePush(
+        title=f"{_prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_CREATION)}",
+        body=f"{_prepare_push_notify_body_msg_for_expense(
+            action=ExpenseActionType.EXPENSE_CREATION,
+            expenseDataRequestMap=entry,expenseAddedByEmailId=added_by, group=group)}",
+        tokens=fcm_tokens,
+        pushNotificationType=ExpenseActionType.EXPENSE_CREATION
+    )
+
     return Response(created_expenses, status=status.HTTP_201_CREATED)
 
 
 class ExpenseAPIView(APIView):
+
+    authentication_classes = [CustomAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         group_id = request.query_params.get('groupId')
@@ -379,6 +427,7 @@ class ExpenseAPIView(APIView):
 
     def post(self, request):
         data = request.data.copy()
+        linked_user_id = request.user.emailIdLinked_id
 
         try:
             group = Group.objects.get(id=data.get('groupId'))
@@ -399,13 +448,15 @@ class ExpenseAPIView(APIView):
 
         elif expense_type in ["shared-equally", "custom-split"]:
             collaborators = Collaborator.objects.filter(groupId=group)
-            return _create_multiple_expenses(data, collaborators)
+            return _create_multiple_expenses(data, collaborators, added_by.collabUserId.emailId, group, linked_user_id)
 
         return Response({'error': 'Invalid expense type'}, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request):
         e_creation_id = request.query_params.get('eCreationId')
         data = request.data.copy()
+        linked_user_id = request.user.emailIdLinked_id
+        updated_data = data.copy()
 
         try:
             group = Group.objects.get(id=data.get('groupId'))
@@ -445,7 +496,6 @@ class ExpenseAPIView(APIView):
             updated_expenses = []
 
             for collab, expense in zip(collaborators, expenses):
-                updated_data = data.copy()
                 updated_data["expenseForCollaborator"] = collab.id
                 updated_data["eAmt"] = (e_raw_amt / total).quantize(Decimal('.01'), rounding=ROUND_DOWN)
 
@@ -456,12 +506,34 @@ class ExpenseAPIView(APIView):
                 else:
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+            collaboratorsDetails = Collaborator.objects.filter(
+                createdBy=linked_user_id,
+                collabUserId__isnull=False
+            ).select_related('collabUserId')
+
+            fcm_tokens = list(set(
+                collab.collabUserId.fcmToken for collab in collaboratorsDetails if collab.collabUserId.fcmToken
+            ))
+
+            print("fcm_tokens : ", fcm_tokens)
+
+            sendSplitExpensePush(
+                title=f"{_prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_UPDATION)}",
+                body=f"{_prepare_push_notify_body_msg_for_expense(
+                    action=ExpenseActionType.EXPENSE_UPDATION,
+                    expenseDataRequestMap=updated_data, expenseUpdatedByEmailId=added_by.collabUserId.emailId, 
+                    group=group)}",
+                tokens=fcm_tokens,
+                pushNotificationType=ExpenseActionType.EXPENSE_UPDATION
+            )
+
             return Response(updated_expenses, status=status.HTTP_200_OK)
 
         return Response({'error': 'Invalid expense type'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
         eCreationId = request.query_params.get('eCreationId')
+        linked_user_id = request.user.emailIdLinked_id
 
         if not eCreationId:
             return Response({"error": "eCreationId is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -474,8 +546,31 @@ class ExpenseAPIView(APIView):
 
         if expense_type in [ExpenseType.SHARED_EQUALLY.value, ExpenseType.CUSTOM_SPLIT.value]:
             deleted_count, _ = Expense.objects.filter(eCreationId=eCreationId).delete()
+
+            collaboratorsDetails = Collaborator.objects.filter(
+                createdBy=linked_user_id,
+                collabUserId__isnull=False
+            ).select_related('collabUserId')
+
+            fcm_tokens = list(set(
+                collab.collabUserId.fcmToken for collab in collaboratorsDetails if collab.collabUserId.fcmToken
+            ))
+
+            print("fcm_tokens : ", fcm_tokens)
+            emailId = Collaborator.objects.filter(createdBy=linked_user_id).first().createdBy.emailId
+            group = Group.objects.get(id=expense.groupId_id)
+            sendSplitExpensePush(
+                title=f"{_prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_DELETION)}",
+                body=f"{_prepare_push_notify_body_msg_for_expense(
+                    action=ExpenseActionType.EXPENSE_DELETION,
+                    expenseDataObj=expense, expenseDeletedBy=emailId,
+                    group=group)}",
+                tokens=fcm_tokens,
+                pushNotificationType=ExpenseActionType.EXPENSE_DELETION
+            )
+
             return Response(
-                {"detail": f"Group expense deleted successfully ({deleted_count} items)."},
+                {"detail": f"Expense deleted successfully ({deleted_count} items)."},
                 status=status.HTTP_200_OK
             )
         else:
