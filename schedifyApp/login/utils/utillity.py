@@ -9,7 +9,7 @@ from rest_framework import status, serializers
 from rest_framework.authtoken.models import Token
 
 from schedifyApp.app_utility.utils import create_response, custom_error_response
-from schedifyApp.login.const import otp_validity_period
+from schedifyApp.login.const import validity_period
 from schedifyApp.login.models import AuthToken, EmailIdRegistration
 
 
@@ -20,7 +20,7 @@ def generate_otp() -> int:
 
 def get_current_time() -> datetime:
     """Get the current local time in Asia/Kolkata timezone."""
-    return datetime.now(pytz.timezone('Asia/Kolkata')) + timedelta(minutes= otp_validity_period)
+    return datetime.now(pytz.timezone('Asia/Kolkata')) + timedelta(minutes= validity_period)
 
 
 def handle_existing_token(auth_token_object, mobile_reg_data):
