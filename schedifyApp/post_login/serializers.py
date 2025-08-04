@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import PostLoginAppData, BottomNavOption, WeatherNotification
+from .models import PostLoginAppData, BottomNavOption, WeatherNotification, HomeCellAction, HomeCellDetails, \
+    HomeCarouselBanner
 from ..address.models import Address
 from ..address.serializers import AddressSerializer
 
@@ -17,11 +18,31 @@ class WeatherNotificationSerializer(serializers.ModelSerializer):
         model = WeatherNotification
         fields = ['id', 'info']
 
+class HomeCarouselBannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeCarouselBanner
+        fields = ['id', 'title', 'subtitle', 'image_url', 'background_gradient_colors']
+
+class HomeCellActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeCellAction
+        fields = ['action_description', 'action_type', 'metadata']
+
+
+class HomeCellDetailsSerializer(serializers.ModelSerializer):
+    action = HomeCellActionSerializer()
+
+    class Meta:
+        model = HomeCellDetails
+        fields = ['id', 'title', 'image_url', 'description', 'background_gradient_colors', 'title_color', 'action']
+
 
 class PostLoginAppDataSerializer(serializers.ModelSerializer):
     bottom_nav_option = BottomNavOptionSerializer(many=True, read_only=True)
     weather_notification = WeatherNotificationSerializer(many=True, read_only=True)
+    home_carousel_banners = HomeCarouselBannerSerializer(many=True)
+    home_cell_details = HomeCellDetailsSerializer(many=True)
 
     class Meta:
         model = PostLoginAppData
-        fields = ['id', 'bottom_nav_option', 'weather_notification']
+        fields = ['id', 'bottom_nav_option', 'weather_notification', 'home_carousel_banners', 'home_cell_details']

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'social_django',
     'drf_social_oauth2',
     'jobscheduler',
+    'admin_auto_filters',
 ]
 
 MIDDLEWARE = [

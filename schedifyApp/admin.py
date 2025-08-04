@@ -1,3 +1,4 @@
+from admin_auto_filters.filters import AutocompleteFilter
 from django.contrib import admin
 from django.utils.timezone import localtime
 
@@ -9,6 +10,7 @@ from .address.models import Address
 from .communication.models import OtpConfig
 from .lists.split_expenses.models import *
 from .post_login.models import *
+from .session.models import SessionDataConfig, Session
 from .weather.models import WeatherForecast, WeatherPincodeMappedData, \
     ImageAsset, FileAsset, WeatherStatusImages
 
@@ -31,6 +33,7 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 @admin.register(EmailIdRegistration)
 class EmailIdRegistrationAdmin(admin.ModelAdmin):
+    search_fields = ['emailId']
     list_display = (['id', 'emailId', 'otpTimeStamp', 'otp', 'fcmToken'])
 
 
@@ -148,13 +151,13 @@ class HomeCarouselBannerAdmin(admin.ModelAdmin):
 # Admin for HomeCellDetails
 @admin.register(HomeCellDetails)
 class HomeCellDetailsAdmin(admin.ModelAdmin):
-    list_display = ['title', 'image_url', 'description', 'title_color', 'background_gradient_colors']
+    list_display = ['title', 'image_url', 'description', 'title_color', 'background_gradient_colors', 'action']
     search_fields = ['title', 'description']
 
 @admin.register(AppDetails)
 class AppDetailsAdmin(admin.ModelAdmin):
     list_display = ('id', 'app_specific_details', 'app_update_info')
-    filter_horizontal = ('app_tour_info', 'home_carousel_banners', 'home_cell_details')
+    filter_horizontal = ['app_tour_info']
 
 @admin.register(MyModel)
 class MyModelAdmin(admin.ModelAdmin):
@@ -174,7 +177,13 @@ class WeatherNotificationInline(admin.TabularInline):
 
 @admin.register(PostLoginAppData)
 class PostLoginAppDataAdmin(admin.ModelAdmin):
-    list_display = ['id', 'get_bottom_nav_options', 'get_weather_notifications']
+    list_display = [
+        'id',
+        'get_bottom_nav_options',
+        'get_weather_notifications',
+        'get_home_carousel_banners',
+        'get_home_cell_details',
+    ]
 
     def get_bottom_nav_options(self, obj):
         return ", ".join([str(option.title) for option in obj.bottom_nav_option.all()])
@@ -183,8 +192,21 @@ class PostLoginAppDataAdmin(admin.ModelAdmin):
     def get_weather_notifications(self, obj):
         return ", ".join([str(notif.info) for notif in obj.weather_notification.all()])
     get_weather_notifications.short_description = 'Weather Notifications'
-    filter_horizontal = ('bottom_nav_option', 'weather_notification')
 
+    def get_home_carousel_banners(self, obj):
+        return ", ".join([str(banner.title) for banner in obj.home_carousel_banners.all()])
+    get_home_carousel_banners.short_description = 'Home Carousel Banners'
+
+    def get_home_cell_details(self, obj):
+        return ", ".join([str(cell.title) for cell in obj.home_cell_details.all()])
+    get_home_cell_details.short_description = 'Home Cell Details'
+
+    filter_horizontal = (
+        'bottom_nav_option',
+        'weather_notification',
+        'home_carousel_banners',
+        'home_cell_details',
+    )
 
 # Optional: Register the related models if needed
 @admin.register(BottomNavOption)
@@ -312,3 +334,45 @@ class FileAdmin(admin.ModelAdmin):
 @admin.register(WeatherStatusImages)
 class WeatherStatusImagesAdmin(admin.ModelAdmin):
     list_display = ['id', 'url', 'status']
+
+
+@admin.register(SessionDataConfig)
+class SessionDataConfigAdmin(admin.ModelAdmin):
+    list_display = ('isPreAuthDataRefreshRequired', 'isPostAuthDataRefreshRequired',
+                    'isPreAuthDataRefreshedAt', 'isPostAuthDataRefreshedAt')
+
+
+class UserFilter(AutocompleteFilter):
+    title = 'User'               # filter title
+    field_name = 'user'          # field in Session model
+
+@admin.register(Session)
+class SessionAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'user',
+        'preAuthSessionCreatedAt',
+        'postAuthSessionCreatedAt',
+        'preAuthSessionRefreshedAt',
+        'postAuthSessionRefreshedAt',
+        'isPreAuthDataRefreshValue',
+        'isPostAuthDataRefreshValue'
+    )
+    list_filter = (
+        UserFilter,
+        'isPreAuthDataRefreshValue',
+        'isPostAuthDataRefreshValue',
+    )
+    search_fields = ('user__emailId',)
+    readonly_fields = (
+        'preAuthSessionCreatedAt',
+        'postAuthSessionCreatedAt',
+        'preAuthSessionRefreshedAt',
+        'postAuthSessionRefreshedAt',
+    )
+
+@admin.register(HomeCellAction)
+class HomeCellActionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'action_type', 'action_description', 'metadata')
+    search_fields = ('action_description',)
+    list_filter = ('action_type',)

@@ -26,6 +26,9 @@ class EmailIdRegistration(models.Model):
     fcmToken = models.CharField(max_length=200, default="")
     objects = models.Manager()
 
+    def __str__(self):
+        return self.emailId
+
 IST = pytz.timezone('Asia/Kolkata')
 class AuthToken(models.Model):
     user = models.ForeignKey(EmailIdRegistration, on_delete=models.CASCADE)
