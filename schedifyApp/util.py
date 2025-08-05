@@ -47,3 +47,29 @@ class CustomDateTimeField(serializers.DateTimeField):
             return aware_datetime
         except ValueError:
             raise serializers.ValidationError("Invalid datetime format. Use 'YYYY-MM-DD HH:MM'.")
+
+
+class CustomDateTimeFieldWithoutValidation(serializers.DateTimeField):
+    def to_representation(self, value):
+        if value is None:
+            return None
+
+        ist = pytz.timezone("Asia/Kolkata")
+        value = timezone.localtime(value, ist)
+        return value.strftime('%Y-%m-%d %H:%M')
+
+    def to_internal_value(self, data):
+        # Accept nulls only if allowed
+        if data in [None, '', 'null']:
+            if self.allow_null:
+                return None
+            raise serializers.ValidationError("This field may not be null.")
+
+        try:
+            parsed_datetime = datetime.strptime(data, '%Y-%m-%d %H:%M')
+            ist = pytz.timezone("Asia/Kolkata")
+            aware_datetime = ist.localize(parsed_datetime)
+
+            return aware_datetime
+        except ValueError:
+            raise serializers.ValidationError("Invalid datetime format. Use 'YYYY-MM-DD HH:MM'.")

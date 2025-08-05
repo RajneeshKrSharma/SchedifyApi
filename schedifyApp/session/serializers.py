@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import SessionDataConfig, Session
-from ..util import CustomDateTimeField
+from ..util import CustomDateTimeFieldWithoutValidation
 
 
 class SessionDataConfigSerializer(serializers.ModelSerializer):
@@ -10,10 +10,10 @@ class SessionDataConfigSerializer(serializers.ModelSerializer):
 
 
 class SessionSerializer(serializers.ModelSerializer):
-    preAuthSessionCreatedAt = CustomDateTimeField(allow_null=True, required=False)
-    postAuthSessionCreatedAt = CustomDateTimeField(allow_null=True, required=False)
-    postAuthSessionRefreshedAt = CustomDateTimeField(allow_null=True, required=False)
-    preAuthSessionRefreshedAt = CustomDateTimeField(allow_null=True, required=False)
+    preAuthSessionCreatedAt = CustomDateTimeFieldWithoutValidation(allow_null=True, required=False)
+    postAuthSessionCreatedAt = CustomDateTimeFieldWithoutValidation(allow_null=True, required=False)
+    postAuthSessionRefreshedAt = CustomDateTimeFieldWithoutValidation(allow_null=True, required=False)
+    preAuthSessionRefreshedAt = CustomDateTimeFieldWithoutValidation(allow_null=True, required=False)
 
     class Meta:
         model = Session
