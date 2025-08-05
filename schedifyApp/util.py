@@ -22,17 +22,22 @@ import pytz
 
 class CustomDateTimeField(serializers.DateTimeField):
     def to_representation(self, value):
-        # Convert to IST before formatting
+        if value is None:
+            return None
+
         ist = pytz.timezone("Asia/Kolkata")
         value = timezone.localtime(value, ist)
         return value.strftime('%Y-%m-%d %H:%M')
 
     def to_internal_value(self, data):
-        try:
-            # Parse naive datetime
-            parsed_datetime = datetime.strptime(data, '%Y-%m-%d %H:%M')
+        # Accept nulls only if allowed
+        if data in [None, '', 'null']:
+            if self.allow_null:
+                return None
+            raise serializers.ValidationError("This field may not be null.")
 
-            # Localize to IST
+        try:
+            parsed_datetime = datetime.strptime(data, '%Y-%m-%d %H:%M')
             ist = pytz.timezone("Asia/Kolkata")
             aware_datetime = ist.localize(parsed_datetime)
 

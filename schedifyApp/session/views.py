@@ -34,14 +34,16 @@ class SessionAPIView(APIView):
 
     def post(self, request):
         data = request.data.copy()
-        data['user'] = request.user.id
+        user_id = request.user.emailIdLinked_id
 
         if Session.objects.filter(user=request.user.id).exists():
             return Response({"error": "Session for this user already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = SessionSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(
+                user_id = user_id
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
