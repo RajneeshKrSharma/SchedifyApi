@@ -20,6 +20,9 @@ class SessionSerializer(serializers.ModelSerializer):
         fields = ["id", "preAuthSessionCreatedAt", "postAuthSessionCreatedAt",
                   "preAuthSessionRefreshedAt", "postAuthSessionRefreshedAt",
                   "isPreAuthDataRefreshValue", "isPostAuthDataRefreshValue", "user"]
+        extra_kwargs = {
+            "user": {"read_only": True}
+        }
 
     def validate_user(self, value):
         # Only enforce uniqueness if creating a new session
