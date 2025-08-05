@@ -31,13 +31,9 @@ class HomeCarouselBanner(models.Model):
         return self.title or "Untitled Banner"
 
 class HomeCellAction(models.Model):
-    action_description = models.CharField(
+    action_screen_name = models.CharField(
         max_length=100,
         default=""
-    )
-
-    action_type = models.IntegerField(
-        default=0
     )
 
     metadata = jsonfield.JSONField(
@@ -47,7 +43,7 @@ class HomeCellAction(models.Model):
     )
 
     def __str__(self):
-        return f"ActionType: {self.action_type} | {self.action_description}"
+        return f"{self.action_screen_name}"
 
 class HomeCellDetails(models.Model):
     title = models.CharField(max_length=255)

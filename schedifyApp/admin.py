@@ -373,6 +373,5 @@ class SessionAdmin(admin.ModelAdmin):
 
 @admin.register(HomeCellAction)
 class HomeCellActionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'action_type', 'action_description', 'metadata')
-    search_fields = ('action_description',)
-    list_filter = ('action_type',)
+    list_display = ('id', 'action_screen_name', 'metadata')
+    search_fields = ('action_screen_name',)

@@ -26,7 +26,7 @@ class HomeCarouselBannerSerializer(serializers.ModelSerializer):
 class HomeCellActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = HomeCellAction
-        fields = ['action_description', 'action_type', 'metadata']
+        fields = ['action_screen_name', 'metadata']
 
 
 class HomeCellDetailsSerializer(serializers.ModelSerializer):
