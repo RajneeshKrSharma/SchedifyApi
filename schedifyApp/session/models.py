@@ -12,6 +12,8 @@ class SessionDataConfig(models.Model):
     isPreAuthDataRefreshedAt = models.DateTimeField(null=True, blank=True, editable=False)
     isPostAuthDataRefreshedAt = models.DateTimeField(null=True, blank=True, editable=False)
 
+    sessionExpiryTimeInMin = models.IntegerField(null=True, blank=True)
+
     def save(self, *args, **kwargs):
         if self.pk:
             old = SessionDataConfig.objects.get(pk=self.pk)

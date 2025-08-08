@@ -339,7 +339,7 @@ class WeatherStatusImagesAdmin(admin.ModelAdmin):
 @admin.register(SessionDataConfig)
 class SessionDataConfigAdmin(admin.ModelAdmin):
     list_display = ('isPreAuthDataRefreshRequired', 'isPostAuthDataRefreshRequired',
-                    'isPreAuthDataRefreshedAt', 'isPostAuthDataRefreshedAt')
+                    'isPreAuthDataRefreshedAt', 'isPostAuthDataRefreshedAt', 'sessionExpiryTimeInMin')
 
 
 class UserFilter(AutocompleteFilter):
