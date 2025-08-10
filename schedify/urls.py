@@ -41,4 +41,5 @@ urlpatterns = [
     path('api/weather/', include('schedifyApp.weather.urls')),  # Includes all app-level URLs
     path('helper/', include('schedifyApp.deep_links.urls')),  # Includes all app-level URLs
     path('api/session/', include('schedifyApp.session.urls')),
+    path('api/bulk/', include('schedifyApp.data_insert.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
