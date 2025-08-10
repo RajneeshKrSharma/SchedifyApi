@@ -62,7 +62,6 @@ def login_via_otp(request: Request) -> Response:
     """Handle requests to get OTP for a Email number."""
     received_email_id = request.data.get("emailId")
     entered_otp = request.data.get("otp")
-    fcmToken = request.data.get("fcmToken")
 
     from schedifyApp.login.serializers import GetOtpSerializer
     serializer = GetOtpSerializer(data=request.data)
@@ -133,7 +132,6 @@ def login_via_otp(request: Request) -> Response:
 
     # Update mobile registration details
     email_id_registration.otp = ""
-    email_id_registration.fcmToken = fcmToken
 
     email_id_registration.save()
 

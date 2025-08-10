@@ -173,7 +173,6 @@ class WeatherScheduledData(APIView):
                 user_info = {
                     "id": user.id,
                     "emailId": user.emailId,
-                    "fcmToken": user.fcmToken,
                     "otp": user.otp,
                     "otpTimeStamp": user.otpTimeStamp
                 }
@@ -211,12 +210,11 @@ class WeatherStatus(APIView):
         user = request.user
         user_id = user.emailIdLinked_id
         userEmailId = request.user.emailIdLinked.emailId
-        fcmToken = request.user.emailIdLinked.fcmToken
 
         user_scheduled_object = get_object_or_404(ScheduleItemList, user_id=user_id, id=scheduledItemId)
 
         if user_scheduled_object is not None:
-            perform(pincode, user_scheduled_object, userEmailId, fcmToken, notifyMedium)
+            perform(pincode, user_scheduled_object, userEmailId, "", notifyMedium)
 
             weather_item_obj = WeatherForecast.objects.filter(scheduleItem=user_scheduled_object)
             weather_status_images = WeatherStatusImages.objects.all()

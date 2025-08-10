@@ -1,8 +1,6 @@
 from rest_framework import serializers
 from .models import PostLoginAppData, BottomNavOption, WeatherNotification, HomeCellAction, HomeCellDetails, \
-    HomeCarouselBanner
-from ..address.models import Address
-from ..address.serializers import AddressSerializer
+    HomeCarouselBanner, PostLoginUserDetail
 
 
 # Serializer for BottomNavOption
@@ -46,3 +44,9 @@ class PostLoginAppDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostLoginAppData
         fields = ['id', 'bottom_nav_option', 'weather_notification', 'home_carousel_banners', 'home_cell_details']
+
+
+class PostLoginUserDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostLoginUserDetail
+        fields = ["id", "fcmToken", "user"]

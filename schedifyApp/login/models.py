@@ -23,7 +23,6 @@ class EmailIdRegistration(models.Model):
     )
     otpTimeStamp = models.CharField(max_length=100, default="")
     otp = models.CharField(max_length=100, default="")
-    fcmToken = models.CharField(max_length=200, default="")
     objects = models.Manager()
 
     def __str__(self):

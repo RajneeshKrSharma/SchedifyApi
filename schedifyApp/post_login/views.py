@@ -1,11 +1,15 @@
+from django.db import models
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import PostLoginAppData, Address
-from .serializers import PostLoginAppDataSerializer, AddressSerializer
+from .models import PostLoginAppData, Address, PostLoginUserDetail
+from .serializers import PostLoginAppDataSerializer, PostLoginUserDetailSerializer
 from ..CustomAuthentication import CustomAuthentication
-
+from ..address.serializers import AddressSerializer
+from ..login.models import AppUser
 
 
 class PostLoginViewSet(viewsets.ModelViewSet):
@@ -46,3 +50,54 @@ class PostLoginViewSet(viewsets.ModelViewSet):
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+class PostLoginUserDetailView(APIView):
+    """
+    Handles GET (retrieve), POST (create), PUT/PATCH (update), DELETE (remove)
+    for the logged-in user only.
+    """
+
+    authentication_classes = [CustomAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        linked_user_id = request.app_user.id
+        detail = get_object_or_404(PostLoginUserDetail, user_id=linked_user_id)
+        serializer = PostLoginUserDetailSerializer(detail)
+        return Response(serializer.data)
+
+    def post(self, request):
+        linked_user_id = request.app_user.id
+        request.data["user"] = linked_user_id  # force user to be current user
+        serializer = PostLoginUserDetailSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request):
+        linked_user_id = request.app_user.id
+        detail = get_object_or_404(PostLoginUserDetail, user_id=linked_user_id)
+        request.data["user"] = linked_user_id  # enforce linked user
+        serializer = PostLoginUserDetailSerializer(detail, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request):
+        linked_user_id = request.app_user.id
+        detail = get_object_or_404(PostLoginUserDetail, user_id=linked_user_id)
+        request.data["user"] = linked_user_id
+        serializer = PostLoginUserDetailSerializer(detail, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        linked_user_id = request.app_user.id
+        detail = get_object_or_404(PostLoginUserDetail, user_id=linked_user_id)
+        detail.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

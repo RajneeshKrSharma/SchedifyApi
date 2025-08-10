@@ -2,6 +2,8 @@ import jsonfield
 from django.db import models
 
 from schedifyApp.address.models import Address
+from schedifyApp.login.models import AppUser
+
 
 class BottomNavOption(models.Model):
     title = models.CharField(max_length=255, blank=True, null=True)
@@ -81,3 +83,18 @@ class PostLoginAppData(models.Model):
         related_name="home_cell_details",
         blank=True,
     )
+
+
+class PostLoginUserDetail(models.Model):
+    fcmToken = models.CharField(max_length=200, default="")
+    user = models.OneToOneField(
+        AppUser,
+        related_name='post_login_details',
+        on_delete=models.CASCADE,
+        null=True
+    )
+
+    objects = models.Manager()
+
+    def __str__(self):
+        return f"{self.user if self.user else 'No User'}"

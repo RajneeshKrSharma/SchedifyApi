@@ -34,7 +34,7 @@ class CustomUserAdmin(admin.ModelAdmin):
 @admin.register(EmailIdRegistration)
 class EmailIdRegistrationAdmin(admin.ModelAdmin):
     search_fields = ['emailId']
-    list_display = (['id', 'emailId', 'otpTimeStamp', 'otp', 'fcmToken'])
+    list_display = (['id', 'emailId', 'otpTimeStamp', 'otp'])
 
 
 @admin.register(AuthToken)
@@ -379,3 +379,7 @@ class HomeCellActionAdmin(admin.ModelAdmin):
 @admin.register(AppUser)
 class AppUserAdmin(admin.ModelAdmin):
     list_display = ('id', 'social_user', 'email_otp_user', 'app_user_email')
+
+@admin.register(PostLoginUserDetail)
+class PostLoginUserDetailAdmin(admin.ModelAdmin):
+    list_display = ('id', 'fcmToken', 'user')
