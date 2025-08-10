@@ -31,11 +31,11 @@ class WeatherForecastAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
+        user = request.app_user
         current_time = now()
 
         user_scheduled_objects = ScheduleItemList.objects.filter(
-            user_id=user.emailIdLinked_id,
+            user_id=user.id,
             dateTime__gt=current_time,
         )
 
