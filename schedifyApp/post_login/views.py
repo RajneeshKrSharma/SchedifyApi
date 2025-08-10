@@ -15,10 +15,10 @@ class PostLoginViewSet(viewsets.ModelViewSet):
     http_method_names = ['get']  # or add 'post', 'put', etc., if needed
 
     def list(self, request, *args, **kwargs):
-        user = request.user
+        user = request.app_user
 
         # 1. Fetch related Address
-        address = Address.objects.filter(user_id=user.emailIdLinked_id).first()
+        address = Address.objects.filter(user_id=user.id).first()
         address_data = AddressSerializer(address).data if address else None
 
         # 2. Fetch post login data
