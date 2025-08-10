@@ -14,20 +14,15 @@ class AddressView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        try:
-            address = Address.objects.filter(user_id=request.user.emailIdLinked_id).first()
-            if address:
-                serializer = AddressSerializer(address)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response({"detail": "No address found."}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        address = Address.objects.filter(user_id=request.app_user.id).first()
+        if address:
+            return Response(AddressSerializer(address).data)
+        return Response({"detail": "No address found."}, status=404)
 
     def post(self, request):
         serializer = AddressSerializer(data=request.data)
-        print("request.user.emailIdLinked_id: ", request.user.emailIdLinked_id)
         if serializer.is_valid():
             # Optional: force the user field to match the logged-in user
-            serializer.save(user_id=request.user.emailIdLinked_id)
+            serializer.save(user_id=request.app_user.id)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

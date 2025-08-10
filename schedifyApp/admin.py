@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.utils.timezone import localtime
 
 from schedifyApp.before_login.models import *
-from schedifyApp.login.models import CustomUser, AuthToken, CustomUserProfile, IST
+from schedifyApp.login.models import CustomUser, AuthToken, CustomUserProfile, IST, AppUser, EmailIdRegistration
 from schedifyApp.models import Content
 from schedifyApp.schedule_list.models import ScheduleItemList, ItemType, ScheduleListAttachments
 from .address.models import Address
@@ -51,7 +51,7 @@ class TokenAdmin(admin.ModelAdmin):
 
 @admin.register(ScheduleItemList)
 class ScheduleItemListAdmin(admin.ModelAdmin):
-    list_display = ['id', 'dateTime', 'title', 'lastScheduleOn', 'isWeatherNotifyEnabled', 'isItemPinned', 'subTitle', 'isArchived', 'priority', 'user_id', 'google_auth_user_id']
+    list_display = ['id', 'dateTime', 'title', 'lastScheduleOn', 'isWeatherNotifyEnabled', 'isItemPinned', 'subTitle', 'isArchived', 'priority', 'user_id']
 
 
 @admin.register(CustomUserProfile)
@@ -375,3 +375,7 @@ class SessionAdmin(admin.ModelAdmin):
 class HomeCellActionAdmin(admin.ModelAdmin):
     list_display = ('id', 'action_screen_name', 'metadata')
     search_fields = ('action_screen_name',)
+
+@admin.register(AppUser)
+class AppUserAdmin(admin.ModelAdmin):
+    list_display = ('id', 'social_user', 'email_otp_user', 'app_user_email')

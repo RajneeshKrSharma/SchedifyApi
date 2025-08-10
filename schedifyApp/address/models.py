@@ -3,7 +3,7 @@ from django.db import models
 # models.py
 from django.core.exceptions import ValidationError
 
-from schedifyApp.login.models import EmailIdRegistration
+from schedifyApp.login.models import EmailIdRegistration, AppUser
 
 
 def validate_pincode(value):
@@ -13,4 +13,4 @@ def validate_pincode(value):
 class Address(models.Model):
     pincode = models.CharField(max_length=6, validators=[validate_pincode])
     address = models.CharField(max_length=255)
-    user = models.ForeignKey(EmailIdRegistration, on_delete=models.CASCADE, related_name="addresses")
+    user = models.OneToOneField(AppUser, on_delete=models.CASCADE, null=True)

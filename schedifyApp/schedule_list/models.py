@@ -4,7 +4,8 @@ import pytz
 from django.contrib.auth.models import User
 from django.db import models
 
-from schedifyApp.login.models import EmailIdRegistration
+from schedifyApp.login.models import EmailIdRegistration, AppUser
+
 
 class ItemType(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -13,8 +14,7 @@ class ItemType(models.Model):
         return self.name
 
 class ScheduleItemList(models.Model):
-    user = models.ForeignKey(EmailIdRegistration, on_delete=models.CASCADE, related_name="user", null=True)
-    google_auth_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="google_auth_user", null=True)
+    user = models.ForeignKey(AppUser, on_delete=models.CASCADE, null=True)
     dateTime = models.DateTimeField()
     title = models.CharField(max_length=1000, default="Title")
     isItemPinned = models.BooleanField(default=False)

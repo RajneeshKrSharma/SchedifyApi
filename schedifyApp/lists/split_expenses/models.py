@@ -1,7 +1,7 @@
 from django.db import models
 
 from schedifyApp.lists.split_expenses.utils.enums import CollaboratorStatus, SettleMode, SETTLE_MEDIUM_CHOICES
-from schedifyApp.login.models import EmailIdRegistration, validate_email_regex
+from schedifyApp.login.models import AppUser, validate_email_regex, AppUser
 
 
 class Group(models.Model):
@@ -11,9 +11,10 @@ class Group(models.Model):
     name = models.CharField(max_length=100)
     created_on = models.DateTimeField(auto_now_add=True)
     createdBy = models.ForeignKey(
-        EmailIdRegistration,
+        AppUser,
         related_name='group_created_by',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        null=True
     )
 
     objects = models.Manager()
@@ -31,12 +32,13 @@ class Collaborator(models.Model):
     who is a registered user or a pending invitation identified by email.
     """
     createdBy = models.ForeignKey(
-        EmailIdRegistration,
+        AppUser,
         related_name='collaborators_created',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        null=True
     )
     collabUserId = models.ForeignKey(
-        EmailIdRegistration,
+        AppUser,
         related_name='collaborators_user_id',
         on_delete=models.CASCADE,
         null=True

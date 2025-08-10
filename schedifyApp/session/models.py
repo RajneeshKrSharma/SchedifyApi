@@ -33,7 +33,7 @@ class SessionDataConfig(models.Model):
 
 
 class Session(models.Model):
-    user = models.OneToOneField('EmailIdRegistration', on_delete=models.CASCADE, related_name='session')
+    user = models.OneToOneField('EmailIdRegistration', on_delete=models.CASCADE, related_name='session', null=True)
 
     preAuthSessionCreatedAt = models.DateTimeField(auto_now_add=True)
     postAuthSessionCreatedAt = models.DateTimeField(null=True, blank=True)

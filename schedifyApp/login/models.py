@@ -100,3 +100,22 @@ class CustomUserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+class AppUser(models.Model):
+    social_user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)
+    email_otp_user = models.OneToOneField(EmailIdRegistration, null=True, on_delete=models.CASCADE)
+    app_user_email = models.EmailField(
+        max_length=45,
+        validators=[validate_email_regex],
+        verbose_name="Email Address",
+        null=True
+    )
+    # any other fields for AppUser
+
+    def __str__(self):
+        if self.social_user:
+            return f"Social: {self.social_user.username}"
+        elif self.email_otp_user:
+            return f"Email OTP: {self.email_otp_user.emailId}"
+        return "Unknown AppUser"

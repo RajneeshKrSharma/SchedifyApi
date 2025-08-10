@@ -69,16 +69,13 @@ class ScheduleItemView(APIView):
 
     def get(self, request, item_id=None):
         """Handle GET requests to retrieve schedule items."""
-        user = request.user
+        user = request.app_user
 
         if not user:
             return Response({"error": "Invalid user"}, status=status.HTTP_401_UNAUTHORIZED)
 
         if item_id:
-            if "Bearer" not in request.headers["Authorization"]:
-                user_scheduled_object = ScheduleItemList.objects.get(user_id=user.emailIdLinked_id, id=item_id)
-            else:
-                user_scheduled_object = ScheduleItemList.objects.get(google_auth_user_id=user.id, id=item_id)
+            user_scheduled_object = ScheduleItemList.objects.get(user_id=user.id, id=item_id)
 
             if not user_scheduled_object:
                 return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -87,10 +84,7 @@ class ScheduleItemView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
-            if "Bearer" not in request.headers["Authorization"]:
-                schedule_list_items = ScheduleItemList.objects.filter(user_id=user.emailIdLinked_id)
-            else:
-                schedule_list_items = ScheduleItemList.objects.filter(google_auth_user_id=user.id)
+            schedule_list_items = ScheduleItemList.objects.filter(user_id=user.id)
 
             serializer = ScheduleItemListSerializers(schedule_list_items, many=True)
 
@@ -99,17 +93,15 @@ class ScheduleItemView(APIView):
 
     def post(self, request):
         """Handle POST requests to create a schedule item."""
-        user = request.user
+        user = request.app_user
 
         if not user:
             return Response({"error": "Invalid user"}, status=status.HTTP_401_UNAUTHORIZED)
 
         serializer = ScheduleItemListSerializers(data=request.data)
         if serializer.is_valid():
-            if "Bearer" not in request.headers["Authorization"]:
-                serializer.save(user_id=user.emailIdLinked_id)
-            else:
-                serializer.save(google_auth_user_id=user.id)
+            serializer.save(user_id=user.id)
+
             return Response(
                 {'message': "Your Scheduled Data Saved Successfully", 'data': serializer.data},
                 status=status.HTTP_201_CREATED
@@ -118,7 +110,7 @@ class ScheduleItemView(APIView):
 
     def patch(self, request, item_id=None):
         """Handle PATCH requests to update a schedule item."""
-        user = request.user
+        user = request.app_user
 
         if not user:
             return Response({"error": "Invalid user"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -126,7 +118,7 @@ class ScheduleItemView(APIView):
         if not item_id:
             return Response({"error": "Provide item id"}, status=status.HTTP_400_BAD_REQUEST)
 
-        schedule_item = get_object_or_404(ScheduleItemList, id=item_id, user_id=user.emailIdLinked_id)
+        schedule_item = get_object_or_404(ScheduleItemList, id=item_id, user_id=user.id)
         serializer = ScheduleItemListSerializers(schedule_item, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -135,7 +127,7 @@ class ScheduleItemView(APIView):
 
     def delete(self, request, item_id = None):
         """Handle DELETE requests to delete a schedule item."""
-        user = request.user
+        user = request.app_user
 
         if not user:
             return Response({"error": "Invalid user"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -143,9 +135,9 @@ class ScheduleItemView(APIView):
         if not item_id:
             return Response({"error": "Provide item id"}, status=status.HTTP_400_BAD_REQUEST)
 
-        schedule_item = get_object_or_404(ScheduleItemList, id=item_id, user_id=user.emailIdLinked_id)
+        schedule_item = get_object_or_404(ScheduleItemList, id=item_id, user_id=user.id)
         schedule_item.delete()
-        remaining_items = ScheduleItemList.objects.filter(user_id=user.emailIdLinked_id)
+        remaining_items = ScheduleItemList.objects.filter(user_id=user.id)
         serializer = ScheduleItemListSerializers(remaining_items, many=True)
         return Response(
             {

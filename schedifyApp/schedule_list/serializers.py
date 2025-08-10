@@ -20,4 +20,4 @@ class ScheduleItemListSerializers(serializers.ModelSerializer):
         model = ScheduleItemList
         fields = ['id', 'dateTime', 'title', 'lastScheduleOn', 'isWeatherNotifyEnabled',
                   'isItemPinned', 'subTitle', 'isArchived',
-                  'priority', 'user_id', "google_auth_user_id", "attachments"]
+                  'priority', 'user_id', "attachments"]
