@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from schedifyApp.schedule_list.models import ScheduleItemList, ScheduleListAttachments
+from schedifyApp.schedule_list.models import ScheduleItemList, ScheduleListAttachments, ScheduleNotificationStatus
 from schedifyApp.util import CustomDateTimeField
 
 class ScheduleListAttachmentUploadSerializer(serializers.ModelSerializer):
@@ -21,3 +21,9 @@ class ScheduleItemListSerializers(serializers.ModelSerializer):
         fields = ['id', 'dateTime', 'title', 'lastScheduleOn', 'isWeatherNotifyEnabled',
                   'isItemPinned', 'subTitle', 'isArchived',
                   'priority', 'user_id', "attachments"]
+
+
+class ScheduleNotificationStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScheduleNotificationStatus
+        fields = '__all__'

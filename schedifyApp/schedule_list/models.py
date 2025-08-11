@@ -35,3 +35,17 @@ class ScheduleListAttachments(models.Model):
         related_name='attachments'
     )
     file = models.FileField(upload_to='schedule_list/attachments/files/', blank=True, null=True)
+
+
+
+class ScheduleNotificationStatus(models.Model):
+    schedule = models.OneToOneField(ScheduleItemList, on_delete=models.CASCADE, null=True)
+    schedule_date_time = models.CharField(max_length=255)  # Original schedule time
+    title = models.CharField(max_length=255)
+    pincode = models.CharField(max_length=20)
+    next_notify_at = models.CharField(
+        max_length=255, null=True, blank=True
+    )
+
+    def __str__(self):
+        return self.title

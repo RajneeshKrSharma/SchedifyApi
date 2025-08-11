@@ -6,9 +6,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from schedifyApp.CustomAuthentication import CustomAuthentication
-from schedifyApp.schedule_list.models import ScheduleItemList, ScheduleListAttachments
+from schedifyApp.schedule_list.models import ScheduleItemList, ScheduleListAttachments, ScheduleNotificationStatus
 from schedifyApp.schedule_list.serializers import ScheduleItemListSerializers, \
-    ScheduleListAttachmentUploadSerializer
+    ScheduleListAttachmentUploadSerializer, ScheduleNotificationStatusSerializer
 
 from rest_framework.views import APIView
 
@@ -172,3 +172,50 @@ class UploadScheduleAttachmentsView(APIView):
 
         serializer = ScheduleListAttachmentUploadSerializer(uploaded_files, many=True)
         return Response({"attachments": serializer.data}, status=status.HTTP_201_CREATED)
+
+
+class ScheduleNotificationStatusAPIView(APIView):
+    authentication_classes = [CustomAuthentication]  # Use the custom authentication class
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """List all schedule notification statuses"""
+        statuses = ScheduleNotificationStatus.objects.all()
+        serializer = ScheduleNotificationStatusSerializer(statuses, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        """Create a new schedule notification status"""
+        serializer = ScheduleNotificationStatusSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request):
+        """Partially update an existing schedule notification status"""
+        id = request.query_params.get('id')
+
+        try:
+            status_obj = ScheduleNotificationStatus.objects.get(pk=id)
+        except ScheduleNotificationStatus.DoesNotExist:
+            return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ScheduleNotificationStatusSerializer(status_obj, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    def delete(self, request):
+        """Delete a schedule notification status"""
+        id = request.query_params.get('id')
+
+        try:
+            status_obj = ScheduleNotificationStatus.objects.get(pk=id)
+        except ScheduleNotificationStatus.DoesNotExist:
+            return Response({"data": "No data exists"}, status=status.HTTP_200_OK)
+
+        status_obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

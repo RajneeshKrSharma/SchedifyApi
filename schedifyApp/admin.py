@@ -5,7 +5,8 @@ from django.utils.timezone import localtime
 from schedifyApp.before_login.models import *
 from schedifyApp.login.models import CustomUser, AuthToken, CustomUserProfile, IST, AppUser, EmailIdRegistration
 from schedifyApp.models import Content
-from schedifyApp.schedule_list.models import ScheduleItemList, ItemType, ScheduleListAttachments
+from schedifyApp.schedule_list.models import ScheduleItemList, ItemType, ScheduleListAttachments, \
+    ScheduleNotificationStatus
 from .address.models import Address
 from .communication.models import OtpConfig
 from .lists.split_expenses.models import *
@@ -383,3 +384,10 @@ class AppUserAdmin(admin.ModelAdmin):
 @admin.register(PostLoginUserDetail)
 class PostLoginUserDetailAdmin(admin.ModelAdmin):
     list_display = ('id', 'fcmToken', 'user')
+
+
+@admin.register(ScheduleNotificationStatus)
+class ScheduleNotificationStatusAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "pincode", "schedule_date_time", "next_notify_at", "schedule")
+    search_fields = ("title", "pincode")
+    list_filter = ("pincode",)     # Filter sidebar in admin
