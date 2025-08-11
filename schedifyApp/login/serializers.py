@@ -41,7 +41,7 @@ class MobileRegistrationSerializer(serializers.ModelSerializer):
 class GetOtpSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailIdRegistration
-        fields = ['emailId', 'otp', 'fcmToken']
+        fields = ['emailId', 'otp']
 
     def validate(self, data):
         email_id = data.get('emailId')
