@@ -218,4 +218,4 @@ class ScheduleNotificationStatusAPIView(APIView):
             return Response({"data": "No data exists"}, status=status.HTTP_200_OK)
 
         status_obj.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"data": "No data exists"}, status=status.HTTP_200_OK)
