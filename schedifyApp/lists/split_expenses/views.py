@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from schedifyApp.CustomAuthentication import CustomAuthentication
 from schedifyApp.lists.split_expenses.serializers import GroupSerializer, CollaboratorSerializer
-from schedifyApp.login.models import EmailIdRegistration
+from schedifyApp.login.models import EmailIdRegistration, AppUser
 from .models import Group, Collaborator, Expense, ExpenseType
 from .serializers import ExpenseSerializer
 from ...communication.push_notification import sendSplitExpensePush
@@ -262,7 +262,7 @@ class CollaboratorAPIView(APIView):
         })
 
         try:
-            user = EmailIdRegistration.objects.get(emailId=email)
+            user = AppUser.objects.get(app_user_email=email)
             data['collabUserId'] = user.id
         except EmailIdRegistration.DoesNotExist:
             data['collabUserId'] = None  # Will remain a pending invitation

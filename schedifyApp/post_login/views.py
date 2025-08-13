@@ -10,6 +10,7 @@ from .serializers import PostLoginAppDataSerializer, PostLoginUserDetailSerializ
 from ..CustomAuthentication import CustomAuthentication
 from ..address.serializers import AddressSerializer
 from ..login.models import AppUser
+from ..login.serializers import AppUserSerializer
 
 
 class PostLoginViewSet(viewsets.ModelViewSet):
@@ -101,3 +102,13 @@ class PostLoginUserDetailView(APIView):
         detail = get_object_or_404(PostLoginUserDetail, user_id=linked_user_id)
         detail.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class MappedAuthUserDetailView(APIView):
+    authentication_classes = [CustomAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        linked_user_id = request.app_user.id
+        detail = get_object_or_404(AppUser, id=linked_user_id)
+        serializer = AppUserSerializer(detail)
+        return Response({"data": serializer.data})

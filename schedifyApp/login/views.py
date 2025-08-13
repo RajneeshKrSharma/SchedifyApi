@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
-
+from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
-from django.utils.timezone import now
 from requests import Request
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from schedifyApp.communication.mail import send_email_otp_verification
 from schedifyApp.communication.models import OtpConfig
@@ -17,6 +16,7 @@ from schedifyApp.login.utils.utillity import (
     custom_error_response,
     create_response, update_or_create_email_id_registration, generate_otp, get_current_time,
 )
+
 
 def is_otp_sent_via_mail():
     """Fetch OTP configuration from the database."""
@@ -59,7 +59,7 @@ def get_otp_api(request: Request) -> Response:
 
 @api_view(["POST"])
 def login_via_otp(request: Request) -> Response:
-    """Handle requests to get OTP for a Email number."""
+    """Handle requests to get OTP for an Email number."""
     received_email_id = request.data.get("emailId")
     entered_otp = request.data.get("otp")
 
@@ -156,3 +156,17 @@ def login_via_otp(request: Request) -> Response:
         # Generate a new AuthToken
         return handle_new_token(email_id_registration, custom_user)
 
+class CheckDuplicateEmailView(APIView):
+    def get(self, request):
+        emailId = request.query_params.get('emailId')
+        isGAuth = request.query_params.get('isGAuth', '').strip().lower() in ['true', '1', 'yes']
+
+        if not emailId:
+            return Response({"error": "emailId is required"}, status=400)
+
+        if isGAuth:
+            exists = EmailIdRegistration.objects.filter(emailId__iexact=emailId).exists()
+        else:
+            exists = User.objects.filter(email__iexact=emailId).exists()
+
+        return Response({"duplicate": exists}) # if duplicate is false then login allowed

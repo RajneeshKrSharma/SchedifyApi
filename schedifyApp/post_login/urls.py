@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from schedifyApp.post_login.views import PostLoginViewSet, PostLoginUserDetailView
+from schedifyApp.post_login.views import PostLoginViewSet, PostLoginUserDetailView, MappedAuthUserDetailView
 
 router = DefaultRouter()
 router.register(r'getPostLoginDetails', PostLoginViewSet, basename='getPostLoginDetails')
@@ -9,4 +9,5 @@ router.register(r'getPostLoginDetails', PostLoginViewSet, basename='getPostLogin
 urlpatterns = [
     path('', include(router.urls)),
     path("post-login-user-detail", PostLoginUserDetailView.as_view(), name="post-login-user-list"),
+    path("map-login-user", MappedAuthUserDetailView.as_view(), name="map-login-user"),
 ]

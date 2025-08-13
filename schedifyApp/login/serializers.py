@@ -5,7 +5,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from schedifyApp.login.const import validity_period, otp_length
-from schedifyApp.login.models import AuthToken, EmailIdRegistration, IST
+from schedifyApp.login.models import AuthToken, EmailIdRegistration, IST, AppUser
 from schedifyApp.login.utils.utillity import parse_otp_timestamp
 
 
@@ -69,3 +69,9 @@ class GetOtpSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Incorrect OTP.")
 
         return data
+
+
+class AppUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AppUser
+        fields = '__all__'
