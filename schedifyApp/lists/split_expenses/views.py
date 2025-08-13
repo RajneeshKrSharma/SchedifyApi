@@ -261,11 +261,8 @@ class CollaboratorAPIView(APIView):
             'isActive': False
         })
 
-        try:
-            user = AppUser.objects.get(app_user_email=email)
-            data['collabUserId'] = user.id
-        except EmailIdRegistration.DoesNotExist:
-            data['collabUserId'] = None  # Will remain a pending invitation
+        user = AppUser.objects.filter(app_user_email=email).first()
+        data['collabUserId'] = user.id if user else None
 
         serializer = CollaboratorSerializer(data=data)
         if serializer.is_valid():
@@ -569,7 +566,7 @@ class ExpenseAPIView(APIView):
                 title=f"{_prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_UPDATION)}",
                 body=f"{_prepare_push_notify_body_msg_for_expense(
                     action=ExpenseActionType.EXPENSE_UPDATION,
-                    expenseDataRequestMap=updated_data, expenseUpdatedByEmailId=added_by.collabUserId.emailId,
+                    expenseDataRequestMap=updated_data, expenseUpdatedByEmailId=userEmailId,
                     group=group)}",
                 tokens=fcm_tokens,
                 pushNotificationType=ExpenseActionType.EXPENSE_UPDATION
