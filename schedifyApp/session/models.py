@@ -5,6 +5,9 @@ from django.utils import timezone
 from django.db import models
 from django.utils import timezone
 
+from schedifyApp.login.models import AppUser
+
+
 class SessionDataConfig(models.Model):
     isPreAuthDataRefreshRequired = models.BooleanField(default=False)
     isPostAuthDataRefreshRequired = models.BooleanField(default=False)
@@ -33,7 +36,7 @@ class SessionDataConfig(models.Model):
 
 
 class Session(models.Model):
-    user = models.OneToOneField('EmailIdRegistration', on_delete=models.CASCADE, related_name='session', null=True)
+    user = models.OneToOneField(AppUser, on_delete=models.CASCADE, null=True)
 
     preAuthSessionCreatedAt = models.DateTimeField(auto_now_add=True)
     postAuthSessionCreatedAt = models.DateTimeField(null=True, blank=True)
