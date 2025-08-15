@@ -1,4 +1,5 @@
 from os import path
+from typing import Dict, Any
 
 import firebase_admin
 from firebase_admin import credentials, messaging
@@ -26,18 +27,20 @@ def sendPush(title, body, channel, token, weather_image_url, uniqueId):
     print('Successfully sent message:', response)
 
 
-def sendSplitExpensePush(title, body, tokens, pushNotificationType):
-    # Ensure tokens is a list
-    if isinstance(tokens, str):
-        tokens = [tokens]
+from typing import Dict, Any
+from firebase_admin import messaging
 
-    # Avoid sending if token list is empty
-    if not tokens:
+def sendSplitExpensePush(
+    title: str,
+    body: str,
+    email_fcm_map: Dict[str, str],  # email → fcmToken
+    pushNotificationType
+) -> Dict[str, Dict[str, Any]]:
+    if not email_fcm_map:
         print("No tokens provided.")
-        return
+        return {}
 
-    print("body --------> ", body)
-    print("title --------> ", title)
+    tokens = list(email_fcm_map.values())  # Extract FCM tokens for sending
 
     message = messaging.MulticastMessage(
         data={
@@ -51,6 +54,20 @@ def sendSplitExpensePush(title, body, tokens, pushNotificationType):
         tokens=tokens
     )
 
-    # Send and log result
+    # Send messages
     response = messaging.send_each_for_multicast(message)
-    print(f'Successfully sent message to {len(response.responses)} recipients.')
+
+    # Map email → status instead of token
+    token_status_map: Dict[str, Dict[str, Any]] = {}
+    for (email, token), res in zip(email_fcm_map.items(), response.responses):
+        token_status_map[email] = {
+            "notified": res.success,
+            "message_id": res.message_id if res.success else None,
+            "error": str(res.exception) if not res.success else None
+        }
+
+    print("\n" + "-"*50)
+    print(f'Notify Status : {token_status_map}')
+    print("-"*50 + "\n")
+
+    return token_status_map

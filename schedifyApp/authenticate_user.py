@@ -29,12 +29,8 @@ class TokenAuthentication(BaseAuthentication):
             token_instance = AuthToken.objects.get(key=token)
             logger.info(f"Token found: {token_instance.key}")
 
-            # Get the corresponding MobileRegistration instance
             email_id_registration = EmailIdRegistration.objects.get(id=token_instance.user.id)
-            logger.info(f"MobileRegistration found for user ID {email_id_registration.id}")
 
-            # Fetch the associated CustomUser object from MobileRegistration via the emailIdLinked field
-            print("email_id_registration.id: ", email_id_registration.id)
             user = CustomUser.objects.get(emailIdLinked=email_id_registration.id)
             logger.info(f"CustomUser found for user ID {user.id}")
 
@@ -44,7 +40,7 @@ class TokenAuthentication(BaseAuthentication):
             raise AuthenticationFailed('Invalid token or user does not exist')
 
         # Return the CustomUser instance (which has 'is_authenticated')
-        return user, token_instance  # Now you return the CustomUser, not MobileRegistration
+        return user, token_instance
 
 
 from rest_framework.authentication import BaseAuthentication, get_authorization_header

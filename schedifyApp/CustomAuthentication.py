@@ -83,7 +83,6 @@ class CustomAuthentication(BaseAuthentication):
             # Case 2: Token-based without Bearer (for regular TokenAuthentication check)
             user, auth_token = _authenticate_with_token(request)
 
-        print("user: ", user)
         # Centralized AppUser fetch
         app_user = _get_app_user(user, auth_header)
         request.app_user = app_user  # Attach directly to request
