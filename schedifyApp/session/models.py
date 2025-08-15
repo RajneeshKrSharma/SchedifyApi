@@ -48,4 +48,4 @@ class Session(models.Model):
     isPostAuthDataRefreshValue = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Session for {self.user.emailId}"
+        return f"Session for {self.user.app_user_email}"
