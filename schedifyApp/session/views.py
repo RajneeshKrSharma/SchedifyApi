@@ -25,8 +25,9 @@ class SessionAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        user_id = request.app_user.id
         try:
-            session = Session.objects.get(user=request.user.id)
+            session = Session.objects.get(user=user_id)
             serializer = SessionSerializer(session)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Session.DoesNotExist:
@@ -34,9 +35,9 @@ class SessionAPIView(APIView):
 
     def post(self, request):
         data = request.data.copy()
-        user_id = request.user.emailIdLinked_id
+        user_id = request.app_user.id
 
-        if Session.objects.filter(user=request.user.id).exists():
+        if Session.objects.filter(user=user_id).exists():
             return Response({"error": "Session for this user already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = SessionSerializer(data=data)
