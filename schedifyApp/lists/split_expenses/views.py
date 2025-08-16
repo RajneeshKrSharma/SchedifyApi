@@ -123,7 +123,7 @@ class GroupAPIView(APIView):
                 actions=GroupActionType.GROUP_CREATION
             )
 
-            sendSplitExpensePush(
+            response = sendSplitExpensePush(
                 title=_prepare_push_notify_title_msg(GroupActionType.GROUP_CREATION),
                 body=_prepare_push_notify_body_msg_for_group(
                     action=GroupActionType.GROUP_CREATION,
@@ -134,7 +134,7 @@ class GroupAPIView(APIView):
                 pushNotificationType=GroupActionType.GROUP_CREATION
             )
 
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({"data": serializer.data, "notifiedStatus": response}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -165,7 +165,7 @@ class GroupAPIView(APIView):
                 actions=GroupActionType.GROUP_UPDATION
             )
 
-            sendSplitExpensePush(
+            response = sendSplitExpensePush(
                 title=_prepare_push_notify_title_msg(GroupActionType.GROUP_UPDATION),
                 body=_prepare_push_notify_body_msg_for_group(
                     action=GroupActionType.GROUP_UPDATION,
@@ -177,7 +177,7 @@ class GroupAPIView(APIView):
                 pushNotificationType=GroupActionType.GROUP_UPDATION
             )
 
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({"data": serializer.data, "notifiedStatus": response}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -206,7 +206,7 @@ class GroupAPIView(APIView):
 
         group = get_object_or_404(Group, id=group_id)
 
-        sendSplitExpensePush(
+        response = sendSplitExpensePush(
             title=_prepare_push_notify_title_msg(GroupActionType.GROUP_DELETION),
             body=_prepare_push_notify_body_msg_for_group(
                 action=GroupActionType.GROUP_DELETION,
@@ -218,7 +218,7 @@ class GroupAPIView(APIView):
         )
 
         group.delete()
-        return Response({"detail": "Group deleted successfully."}, status=status.HTTP_200_OK)
+        return Response({"detail": "Group deleted successfully.", "notifiedStatus": response}, status=status.HTTP_200_OK)
 
 
 class CollaboratorAPIView(APIView):
@@ -277,7 +277,7 @@ class CollaboratorAPIView(APIView):
                 actions=CollaboratorActionType.COLLABORATOR_CREATION
             )
 
-            sendSplitExpensePush(
+            response = sendSplitExpensePush(
                 title=_prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_CREATION),
                 body= _prepare_push_notify_body_msg_for_collaborator(
                     action=CollaboratorActionType.COLLABORATOR_CREATION,
@@ -289,7 +289,7 @@ class CollaboratorAPIView(APIView):
                 pushNotificationType=CollaboratorActionType.COLLABORATOR_CREATION
             )
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({"data": serializer.data, "notifiedStatus": response}, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -322,7 +322,7 @@ class CollaboratorAPIView(APIView):
                 actions=CollaboratorActionType.COLLABORATOR_UPDATION
             )
 
-            sendSplitExpensePush(
+            response = sendSplitExpensePush(
                 title= _prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_UPDATION),
                 body= _prepare_push_notify_body_msg_for_collaborator(
                     action=CollaboratorActionType.COLLABORATOR_UPDATION,
@@ -334,7 +334,7 @@ class CollaboratorAPIView(APIView):
                 pushNotificationType=CollaboratorActionType.COLLABORATOR_UPDATION
             )
 
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({"data": serializer.data, "notifiedStatus": response}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -370,7 +370,7 @@ class CollaboratorAPIView(APIView):
             actions=CollaboratorActionType.COLLABORATOR_DELETION
         )
 
-        sendSplitExpensePush(
+        response = sendSplitExpensePush(
             title= _prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_DELETION),
             body=_prepare_push_notify_body_msg_for_collaborator(
                 action=CollaboratorActionType.COLLABORATOR_DELETION,
@@ -382,7 +382,7 @@ class CollaboratorAPIView(APIView):
             pushNotificationType=CollaboratorActionType.COLLABORATOR_DELETION
         )
         collaborator.delete()
-        return Response({"detail": "Collaborator deleted."}, status=status.HTTP_200_OK)
+        return Response({"detail": "Collaborator deleted.", "notifiedStatus": response}, status=status.HTTP_200_OK)
 
 
 def _create_single_expense(data):
@@ -418,7 +418,7 @@ def _create_multiple_expenses(base_data, collaborators, added_by, group, linked_
         actions=ExpenseActionType.EXPENSE_CREATION
     )
 
-    sendSplitExpensePush(
+    response = sendSplitExpensePush(
         title=f"{_prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_CREATION)}",
         body=f"{_prepare_push_notify_body_msg_for_expense(
             action=ExpenseActionType.EXPENSE_CREATION,
@@ -427,7 +427,7 @@ def _create_multiple_expenses(base_data, collaborators, added_by, group, linked_
         pushNotificationType=ExpenseActionType.EXPENSE_CREATION
     )
 
-    return Response(created_expenses, status=status.HTTP_201_CREATED)
+    return Response({"data": created_expenses, "notifiedStatus": response}, status=status.HTTP_201_CREATED)
 
 
 class ExpenseAPIView(APIView):
@@ -564,7 +564,7 @@ class ExpenseAPIView(APIView):
                 actions=ExpenseActionType.EXPENSE_UPDATION
             )
 
-            sendSplitExpensePush(
+            response = sendSplitExpensePush(
                 title=f"{_prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_UPDATION)}",
                 body=f"{_prepare_push_notify_body_msg_for_expense(
                     action=ExpenseActionType.EXPENSE_UPDATION,
@@ -574,7 +574,7 @@ class ExpenseAPIView(APIView):
                 pushNotificationType=ExpenseActionType.EXPENSE_UPDATION
             )
 
-            return Response(updated_expenses, status=status.HTTP_200_OK)
+            return Response({"data": updated_expenses, "notifiedStatus": response}, status=status.HTTP_200_OK)
 
         return Response({'error': 'Invalid expense type'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -601,7 +601,7 @@ class ExpenseAPIView(APIView):
             )
 
             group = Group.objects.get(id=expense.groupId_id)
-            sendSplitExpensePush(
+            response = sendSplitExpensePush(
                 title=f"{_prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_DELETION)}",
                 body=f"{_prepare_push_notify_body_msg_for_expense(
                     action=ExpenseActionType.EXPENSE_DELETION,
@@ -612,7 +612,7 @@ class ExpenseAPIView(APIView):
             )
 
             return Response(
-                {"detail": f"Expense deleted successfully ({deleted_count} items)."},
+                {"detail": f"Expense deleted successfully ({deleted_count} items).", "notifiedStatus": response},
                 status=status.HTTP_200_OK
             )
         else:
