@@ -43,4 +43,4 @@ urlpatterns = [
     path('api/session/', include('schedifyApp.session.urls')),
     path('api/bulk/', include('schedifyApp.data_insert.urls')),
     path('logging/', include('schedifyApp.api_logging.urls')),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
