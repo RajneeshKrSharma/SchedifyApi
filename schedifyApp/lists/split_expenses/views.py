@@ -86,7 +86,7 @@ class GroupAPIView(APIView):
         groups = Group.objects.filter(id__in=group_ids)
         serializer = GroupSerializer(groups, many=True)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request):
         """
