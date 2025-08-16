@@ -1,16 +1,14 @@
+# schedifyApp/core/middleware/api_logging.py
 import json
+import logging
 import time
 import uuid
 from django.utils.deprecation import MiddlewareMixin
 
-
-def short_headers(headers):
-    """Keep only useful headers for logging."""
-    keep_keys = ["Content-Type", "User-Agent", "Authorization", "Content-Length"]
-    return {k: v for k, v in headers.items() if k in keep_keys}
+api_logger = logging.getLogger("api_hits")
 
 
-class APILoggingMiddleware(MiddlewareMixin):
+class ApiHitLoggingMiddleware(MiddlewareMixin):
     def process_request(self, request):
         if request.path.startswith("/api/"):
             request._log_id = str(uuid.uuid4())[:8]
@@ -23,12 +21,7 @@ class APILoggingMiddleware(MiddlewareMixin):
             except Exception:
                 body_data = request.body.decode("utf-8", errors="ignore")
 
-            # Request log
-            print(f"===================== [START] {request.method} {request.get_full_path()} ===================== ")
-            print(f"  ID       : {request._log_id}")
-            print(f"  Headers  : {short_headers(dict(request.headers))}")
-            print(f"  Body     : {body_data}")
-            print("-" * 80)
+            request._body_data = body_data
 
         return None
 
@@ -45,12 +38,22 @@ class APILoggingMiddleware(MiddlewareMixin):
                     else response.content.decode("utf-8")
                 )
             except Exception:
-                data = "Non-serializable response"
+                data = "⚠️ Non-serializable response"
 
-            # Response log
-            print(f"  Status   : {response.status_code}")
-            print(f"  Time     : {elapsed} ms")
-            print(f"  Response : {data}")
-            print(f"===================== [END]   {request.method} {request.get_full_path()} | ID: {log_id} ===================== \n")
+            # Minimal JSON log (file/db/UI)
+            entry = {
+                "ts": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "id": log_id,
+                "method": request.method,
+                "path": request.path,
+                "headers": dict(request.headers),
+                "body": getattr(request, "_body_data", {}),
+                "status": response.status_code,
+                "time_ms": elapsed,
+                "response": data,
+                "ip": request.META.get("REMOTE_ADDR"),
+                "ua": request.META.get("HTTP_USER_AGENT", "")[:200],
+            }
+            api_logger.info(json.dumps(entry))
 
         return response

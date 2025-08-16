@@ -65,7 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'schedifyApp.core.api_logging.api_logging_middleware.APILoggingMiddleware'
+    'schedifyApp.api_logging.api_logging_middleware.ApiHitLoggingMiddleware'
 ]
 
 ROOT_URLCONF = 'schedify.urls'
@@ -73,7 +73,10 @@ ROOT_URLCONF = 'schedify.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'schedifyApp/weather/templates')],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'schedifyApp/weather/templates'),
+            os.path.join(BASE_DIR, 'schedifyApp/api_logging/templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -177,7 +180,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -207,3 +210,32 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = EMAIL_HOST_USER_KEY  # Your email
 EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD_KEY  # Your email password or app-specific password
 DEFAULT_FROM_EMAIL = DEFAULT_FROM_EMAIL_KEY
+
+
+import os, logging
+
+# Log directory banaye
+LOG_DIR = os.path.join(BASE_DIR, "runtime_logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Log file ka path
+APP_LOG_FILE = os.path.join(LOG_DIR, "api_hits.log")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "api_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": APP_LOG_FILE,
+        },
+    },
+    "loggers": {
+        "api_hits": {
+            "handlers": ["api_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}

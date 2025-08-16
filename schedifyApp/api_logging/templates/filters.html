@@ -1,0 +1,56 @@
+<header class="bg-white shadow-sm sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
+      <h1 class="text-xl font-semibold text-gray-800">📊 API Logs</h1>
+      <div class="flex flex-wrap gap-3 items-center">
+
+        <!-- 🔍 Search + Filters -->
+        <input id="search" type="text" placeholder="🔍 Search logs..."
+               class="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring"
+               oninput="renderLogs()">
+
+        <select id="filter-method" class="px-2 py-2 border rounded-lg text-sm" onchange="renderLogs()">
+          <option value="all">All Methods</option>
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="DELETE">DELETE</option>
+        </select>
+
+        <select id="filter-status" class="px-2 py-2 border rounded-lg text-sm" onchange="renderLogs()">
+          <option value="all">All Status</option>
+          <option value="2xx">2xx Success</option>
+          <option value="4xx">4xx Client Error</option>
+          <option value="5xx">5xx Server Error</option>
+        </select>
+
+        <select id="filter-time" class="px-2 py-2 border rounded-lg text-sm" onchange="renderLogs()">
+          <option value="all">All Times</option>
+          <option value="<100">&lt; 100ms</option>
+          <option value="100-500">100–500ms</option>
+          <option value=">500">&gt; 500ms</option>
+        </select>
+
+        <!-- 🔄 Refresh -->
+        <button onclick="fetchLogs()"
+                class="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+          Refresh
+        </button>
+
+        <!-- 🧹 Clear Filters -->
+        <button onclick="clearFilters()"
+                class="px-4 py-2 text-sm font-medium bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">
+          Clear Filters
+        </button>
+
+        <!-- 🧹 Clear Logs (staff-only, handled by Django template) -->
+        {% if user.is_staff %}
+        <input type="date" id="clear-date" onchange="toggleClearButton()" class="px-2 py-2 border rounded-lg text-sm">
+        <button id="clear-btn" onclick="clearLogs()"
+                class="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                disabled>
+          Clear Logs
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </header>

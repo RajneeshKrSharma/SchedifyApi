@@ -49,8 +49,6 @@ def getFcmTokens(linked_user_id, actions: Union[GroupActionType, CollaboratorAct
         .distinct()
     )
 
-    print(f"\nNotify for Action : {actions.name}")
-
     return dict(email_fcm_map)  # returns {email: fcmToken}
 
 
