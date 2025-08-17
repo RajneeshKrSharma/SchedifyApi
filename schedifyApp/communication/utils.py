@@ -1,6 +1,4 @@
 from enum import Enum
-
-from enum import Enum
 from typing import Union
 
 class GroupActionType(Enum):
@@ -37,7 +35,7 @@ def get_split_expense_image_url(
 
 from typing import Union
 
-def _prepare_push_notify_title_msg(action: Union[ExpenseActionType, CollaboratorActionType, GroupActionType]) -> str:
+def prepare_push_notify_title_msg(action: Union[ExpenseActionType, CollaboratorActionType, GroupActionType]) -> str:
     title_map = {
         ExpenseActionType.EXPENSE_CREATION: "Expense Added !",
         ExpenseActionType.EXPENSE_UPDATION: "Expense Updated !",
@@ -52,7 +50,7 @@ def _prepare_push_notify_title_msg(action: Union[ExpenseActionType, Collaborator
     return title_map.get(action, "Notification")
 
 
-def _prepare_push_notify_body_msg_for_expense(
+def prepare_push_notify_body_msg_for_expense(
         action: ExpenseActionType,
         group,
         expenseDataObj=None,
@@ -81,7 +79,7 @@ def _prepare_push_notify_body_msg_for_expense(
     print("msg ->", msg)
     return msg
 
-def _prepare_push_notify_body_msg_for_collaborator(
+def prepare_push_notify_body_msg_for_collaborator(
         action: CollaboratorActionType,
         group,
         collaboratorEmailId="",
@@ -111,7 +109,7 @@ def _prepare_push_notify_body_msg_for_collaborator(
 
     return msg
 
-def _prepare_push_notify_body_msg_for_group(
+def prepare_push_notify_body_msg_for_group(
         action,
         group,
         groupOldName="",

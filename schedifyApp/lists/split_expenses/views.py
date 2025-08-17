@@ -1,9 +1,8 @@
 import random
 import string
 from decimal import Decimal, ROUND_DOWN
-from typing import Union
 
-from django.db.models import F
+from django.db.models import Case, When, F, Value, CharField
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -12,21 +11,20 @@ from rest_framework.views import APIView
 
 from schedifyApp.CustomAuthentication import CustomAuthentication
 from schedifyApp.lists.split_expenses.serializers import GroupSerializer, CollaboratorSerializer
-from schedifyApp.login.models import EmailIdRegistration, AppUser
+from schedifyApp.login.models import AppUser
 from .models import Group, Collaborator, Expense, ExpenseType
 from .serializers import ExpenseSerializer
 from ...communication.push_notification import sendSplitExpensePush
 from ...communication.utils import ExpenseActionType, \
-    CollaboratorActionType, _prepare_push_notify_title_msg, _prepare_push_notify_body_msg_for_collaborator, \
-    _prepare_push_notify_body_msg_for_expense, _prepare_push_notify_body_msg_for_group, GroupActionType
+    CollaboratorActionType, prepare_push_notify_title_msg, prepare_push_notify_body_msg_for_collaborator, \
+    prepare_push_notify_body_msg_for_expense, prepare_push_notify_body_msg_for_group, GroupActionType
 from ...post_login.models import PostLoginUserDetail
 
 
-from django.db.models import Case, When, F, Value, CharField
-
-def getFcmTokens(linked_user_id, actions: Union[GroupActionType, CollaboratorActionType, ExpenseActionType]) -> dict:
+def getFcmTokens(groupId) -> dict:
     collaboratorsDetails = Collaborator.objects.filter(
-        createdBy=linked_user_id,
+        groupId=groupId,
+        isActive=True,
         collabUserId__isnull=False
     ).select_related('collabUserId')
 
@@ -119,13 +117,12 @@ class GroupAPIView(APIView):
             serializer = GroupSerializer(groups, many=True)
 
             email_fcm_map = getFcmTokens(
-                linked_user_id,
-                actions=GroupActionType.GROUP_CREATION
+                groupId=group,
             )
 
             response = sendSplitExpensePush(
-                title=_prepare_push_notify_title_msg(GroupActionType.GROUP_CREATION),
-                body=_prepare_push_notify_body_msg_for_group(
+                title=prepare_push_notify_title_msg(GroupActionType.GROUP_CREATION),
+                body=prepare_push_notify_body_msg_for_group(
                     action=GroupActionType.GROUP_CREATION,
                     group=group,
                     groupAddedByEmailId=userEmailId
@@ -161,13 +158,12 @@ class GroupAPIView(APIView):
             serializer.save()
 
             email_fcm_map = getFcmTokens(
-                linked_user_id,
-                actions=GroupActionType.GROUP_UPDATION
+                groupId=group,
             )
 
             response = sendSplitExpensePush(
-                title=_prepare_push_notify_title_msg(GroupActionType.GROUP_UPDATION),
-                body=_prepare_push_notify_body_msg_for_group(
+                title=prepare_push_notify_title_msg(GroupActionType.GROUP_UPDATION),
+                body=prepare_push_notify_body_msg_for_group(
                     action=GroupActionType.GROUP_UPDATION,
                     group=group,
                     groupOldName=groupOldName,
@@ -200,15 +196,14 @@ class GroupAPIView(APIView):
                             status=status.HTTP_403_FORBIDDEN)
 
         email_fcm_map = getFcmTokens(
-            linked_user_id,
-            actions=GroupActionType.GROUP_DELETION
+            groupId=group,
         )
 
         group = get_object_or_404(Group, id=group_id)
 
         response = sendSplitExpensePush(
-            title=_prepare_push_notify_title_msg(GroupActionType.GROUP_DELETION),
-            body=_prepare_push_notify_body_msg_for_group(
+            title=prepare_push_notify_title_msg(GroupActionType.GROUP_DELETION),
+            body=prepare_push_notify_body_msg_for_group(
                 action=GroupActionType.GROUP_DELETION,
                 group=group,
                 groupDeletedByEmailId=userEmailId
@@ -273,13 +268,12 @@ class CollaboratorAPIView(APIView):
             serializer.save()
 
             email_fcm_map = getFcmTokens(
-                linked_user_id,
-                actions=CollaboratorActionType.COLLABORATOR_CREATION
+                groupId=Group.objects.get(id=group_id),
             )
 
             response = sendSplitExpensePush(
-                title=_prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_CREATION),
-                body= _prepare_push_notify_body_msg_for_collaborator(
+                title=prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_CREATION),
+                body= prepare_push_notify_body_msg_for_collaborator(
                     action=CollaboratorActionType.COLLABORATOR_CREATION,
                     group= Group.objects.get(id=group_id),
                     collaboratorEmailId=email,
@@ -318,13 +312,12 @@ class CollaboratorAPIView(APIView):
             data = request.data.copy()
 
             email_fcm_map = getFcmTokens(
-                linked_user_id,
-                actions=CollaboratorActionType.COLLABORATOR_UPDATION
+                groupId=Group.objects.get(id=collaborator.groupId_id),
             )
 
             response = sendSplitExpensePush(
-                title= _prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_UPDATION),
-                body= _prepare_push_notify_body_msg_for_collaborator(
+                title= prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_UPDATION),
+                body= prepare_push_notify_body_msg_for_collaborator(
                     action=CollaboratorActionType.COLLABORATOR_UPDATION,
                     group=Group.objects.get(id=collaborator.groupId_id),
                     collaboratorUpdatedByEmailId=userEmailId,
@@ -366,13 +359,12 @@ class CollaboratorAPIView(APIView):
             all_related_expenses.delete()
 
         email_fcm_map = getFcmTokens(
-            linked_user_id,
-            actions=CollaboratorActionType.COLLABORATOR_DELETION
+            groupId=collaborator.groupId_id,
         )
 
         response = sendSplitExpensePush(
-            title= _prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_DELETION),
-            body=_prepare_push_notify_body_msg_for_collaborator(
+            title= prepare_push_notify_title_msg(CollaboratorActionType.COLLABORATOR_DELETION),
+            body=prepare_push_notify_body_msg_for_collaborator(
                 action=CollaboratorActionType.COLLABORATOR_DELETION,
                 group=Group.objects.get(id=collaborator.groupId_id),
                 collaboratorEmailId=collaborator.collabEmailId,
@@ -414,13 +406,12 @@ def _create_multiple_expenses(base_data, collaborators, added_by, group, linked_
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     email_fcm_map = getFcmTokens(
-        linked_user_id,
-        actions=ExpenseActionType.EXPENSE_CREATION
+        groupId=group,
     )
 
     response = sendSplitExpensePush(
-        title=f"{_prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_CREATION)}",
-        body=f"{_prepare_push_notify_body_msg_for_expense(
+        title=f"{prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_CREATION)}",
+        body=f"{prepare_push_notify_body_msg_for_expense(
             action=ExpenseActionType.EXPENSE_CREATION,
             expenseDataRequestMap=entry,expenseAddedByEmailId=added_by, group=group)}",
         email_fcm_map=email_fcm_map,
@@ -499,7 +490,7 @@ class ExpenseAPIView(APIView):
             return _create_single_expense(data)
 
         elif expense_type in ["shared-equally", "custom-split"]:
-            collaborators = Collaborator.objects.filter(groupId=group)
+            collaborators = Collaborator.objects.filter(groupId=group, isActive=True)
             return _create_multiple_expenses(data, collaborators, userEmailId, group, linked_user_id)
 
         return Response({'error': 'Invalid expense type'}, status=status.HTTP_400_BAD_REQUEST)
@@ -560,13 +551,12 @@ class ExpenseAPIView(APIView):
                     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             email_fcm_map = getFcmTokens(
-                linked_user_id,
-                actions=ExpenseActionType.EXPENSE_UPDATION
+                groupId=group,
             )
 
             response = sendSplitExpensePush(
-                title=f"{_prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_UPDATION)}",
-                body=f"{_prepare_push_notify_body_msg_for_expense(
+                title=f"{prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_UPDATION)}",
+                body=f"{prepare_push_notify_body_msg_for_expense(
                     action=ExpenseActionType.EXPENSE_UPDATION,
                     expenseDataRequestMap=updated_data, expenseUpdatedByEmailId=userEmailId,
                     group=group)}",
@@ -594,16 +584,15 @@ class ExpenseAPIView(APIView):
 
         if expense_type in [ExpenseType.SHARED_EQUALLY.value, ExpenseType.CUSTOM_SPLIT.value]:
             deleted_count, _ = Expense.objects.filter(eCreationId=eCreationId).delete()
+            group = Group.objects.get(id=expense.groupId_id)
 
             email_fcm_map = getFcmTokens(
-                linked_user_id,
-                actions=ExpenseActionType.EXPENSE_DELETION
+                groupId=group,
             )
 
-            group = Group.objects.get(id=expense.groupId_id)
             response = sendSplitExpensePush(
-                title=f"{_prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_DELETION)}",
-                body=f"{_prepare_push_notify_body_msg_for_expense(
+                title=f"{prepare_push_notify_title_msg(ExpenseActionType.EXPENSE_DELETION)}",
+                body=f"{prepare_push_notify_body_msg_for_expense(
                     action=ExpenseActionType.EXPENSE_DELETION,
                     expenseDataObj=expense, expenseDeletedBy=userEmailId,
                     group=group)}",
