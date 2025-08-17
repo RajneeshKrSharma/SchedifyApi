@@ -5,7 +5,7 @@ function showLoader() {
 }
 
 function hideLoader() {
-  document.getElementById("loader").classList.add("hidden");
+  //document.getElementById("loader").classList.add("hidden");
 }
 
 async function fetchLogs() {
