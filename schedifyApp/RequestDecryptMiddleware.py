@@ -42,7 +42,7 @@ class DecryptRequestMiddleware:
             # Convert bytes to string
             return data.decode()
         except Exception as e:
-            raise ValueError(f"Decryption failed: {str(e)}")
+            raise ValueError(f"failed: {str(e)}")
 
     def __call__(self, request):
         # Normalize path to avoid trailing slash mismatches
@@ -62,11 +62,11 @@ class DecryptRequestMiddleware:
                 body = json.loads(request.body)
 
                 # Extract encrypted data and IV
-                encrypted_data = body.get("encrypted_data")
-                iv = body.get("iv")
+                encrypted_data = body.get("atejhdyops")
+                iv = body.get("ezzqweta")
 
                 if not encrypted_data or not iv:
-                    return JsonResponse({"error": "Missing encrypted data or IV"}, status=400)
+                    return JsonResponse({}, status=400)
 
                 # Decrypt the data
                 decrypted_data = self.decrypt_data(encrypted_data, iv)
@@ -76,7 +76,7 @@ class DecryptRequestMiddleware:
                 request.data = json.loads(decrypted_data)  # For DRF compatibility
 
             except Exception as e:
-                return JsonResponse({"error": f"Decryption error: {str(e)}"}, status=400)
+                return JsonResponse({"error": f"error: {str(e)}"}, status=400)
 
         # Continue processing the request
         return self.get_response(request)
