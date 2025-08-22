@@ -40,7 +40,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET_KEY = os.getenv("social_auth_google_oauth2_secr
 GOOGLE_CLIENT_ID_KEY = os.getenv("google_client_id")
 OPEN_WEATHER_MAP_API_KEY = os.getenv("open_weather_map_api_key")
 ENCRYPTION_KEY = os.getenv("encryption_key")
-ENCRYPTION_DISABLED_PATHS = os.getenv("encryption_disabled_path")
+ENCRYPTION_DISABLED_PATHS = os.getenv("encryption_disabled_path", "").split(",")
 
 # Application definition
 
