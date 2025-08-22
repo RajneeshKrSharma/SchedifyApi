@@ -27,7 +27,7 @@ from schedifyApp.views import encrypt_data, decrypt_data, compress_string_view
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('encrypt/', encrypt_data, name='encrypt-data'),
-    path('decrypt/', decrypt_data, name='decrypt-data'),
+    path('decrypt', decrypt_data, name='decrypt-data'),
     path('compress-string/', compress_string_view, name='compress-string'),
     path('auth/', include('drf_social_oauth2.urls', namespace='drf')),
     path("api/login/", include("schedifyApp.login.urls")),  # Include the login package URLs

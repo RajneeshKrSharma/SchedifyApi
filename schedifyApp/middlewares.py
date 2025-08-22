@@ -54,7 +54,7 @@ class EncryptResponseMiddleware:
 
             print("Encrypted data (base64): ", encrypted_data_base64)  # Debug encrypted data
             print("IV (base64): ", iv_base64)  # Debug IV
-            return {"encrypted_data": encrypted_data_base64, "iv": iv_base64}
+            return {"atejhdyops": encrypted_data_base64, "ezzqweta": iv_base64}
 
         except Exception as e:
             print("Encryption error: ", str(e))  # Debug error

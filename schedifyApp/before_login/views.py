@@ -1,49 +1,48 @@
-from rest_framework import viewsets, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework import status
 from .models import AppDetails
 from .serializers import AppDetailsSerializer
 
-# AppDetails ViewSet
-class AppDetailsViewSet(viewsets.ModelViewSet):
-    queryset = AppDetails.objects.all()
-    serializer_class = AppDetailsSerializer
+class AppDetailsAPIView(APIView):
+    """
+    Handles creation, retrieval, update, and delete of AppDetails.
+    If multiple records exist, only the first one will be returned.
+    """
 
-    def list(self, request, *args, **kwargs):
-        """
-        Override the list method to return a single object instead of a list.
-        """
-        queryset = self.get_queryset()
+    def get(self, request):
+        queryset = AppDetails.objects.all()
         if not queryset.exists():
             return Response({"detail": []}, status=status.HTTP_200_OK)
 
-        # Use the first object in the queryset
         instance = queryset.first()
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        serializer = AppDetailsSerializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def create(self, request, *args, **kwargs):
-        """
-        Override the create method to customize how a new AppDetails instance is created.
-        """
-        return super().create(request, *args, **kwargs)
+    def post(self, request):
+        serializer = AppDetailsSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, *args, **kwargs):
-        """
-        Override the update method to customize how an AppDetails instance is updated.
-        """
-        return super().update(request, *args, **kwargs)
+    def put(self, request):
+        queryset = AppDetails.objects.all()
+        if not queryset.exists():
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    def destroy(self, request, *args, **kwargs):
-        """
-        Override the destroy method to customize how an AppDetails instance is deleted.
-        """
-        return super().destroy(request, *args, **kwargs)
+        instance = queryset.first()
+        serializer = AppDetailsSerializer(instance, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # Optionally, add custom actions (e.g., for retrieving a specific related field)
-    @action(detail=True, methods=['get'])
-    def get_app_specific_details(self, request, pk=None):
-        app_details = self.get_object()
-        return Response({
-            'appSpecificDetails': app_details.app_specific_details
-        })
+    def delete(self, request):
+        queryset = AppDetails.objects.all()
+        if not queryset.exists():
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        instance = queryset.first()
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
