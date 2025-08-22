@@ -26,7 +26,7 @@ def encrypt_data(request):
     # Extract data and key from the request
     data = request.data.get("hayusit")
 
-    if data is None or key is None:
+    if data is None:
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
