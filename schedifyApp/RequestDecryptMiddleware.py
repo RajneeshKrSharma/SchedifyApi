@@ -48,7 +48,8 @@ class DecryptRequestMiddleware:
         # Normalize path to avoid trailing slash mismatches
         normalized_path = request.path.rstrip('/')
         encryption_disabled = any(
-            normalized_path == path.rstrip('/') for path in self.encryption_disabled_paths
+            normalized_path.startswith(path.rstrip('/'))
+            for path in self.encryption_disabled_paths
         )
 
         # Skip decryption for disabled paths

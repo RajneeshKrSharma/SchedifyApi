@@ -71,7 +71,8 @@ class EncryptResponseMiddleware:
 
         # Check if the normalized path is in the encryption-enabled list
         encryption_disabled = any(
-            normalized_path == path.rstrip('/') for path in self.encryption_disabled_paths
+            normalized_path.startswith(path.rstrip('/'))
+            for path in self.encryption_disabled_paths
         )
 
         print("encryption_disabled ----> ",encryption_disabled)
