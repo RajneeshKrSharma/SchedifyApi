@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-kmfy0yzvl$ky!iw$z++e0$(r-4-xw(gk53)0glmbl+ngq%0h@i'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['10.0.2.2', '127.0.0.1', 'schedify.pythonanywhere.com']
 
@@ -39,6 +39,8 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv("social_auth_google_oauth2")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET_KEY = os.getenv("social_auth_google_oauth2_secret")
 GOOGLE_CLIENT_ID_KEY = os.getenv("google_client_id")
 OPEN_WEATHER_MAP_API_KEY = os.getenv("open_weather_map_api_key")
+ENCRYPTION_KEY = os.getenv("encryption_key")
+ENCRYPTION_DISABLED_PATHS = os.getenv("encryption_disabled_path", "").split(",")
 
 # Application definition
 
@@ -65,6 +67,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'schedifyApp.RequestDecryptMiddleware.DecryptRequestMiddleware',
+    'schedifyApp.middlewares.EncryptResponseMiddleware',
     'schedifyApp.api_logging.api_logging_middleware.ApiHitLoggingMiddleware'
 ]
 
@@ -197,9 +201,6 @@ STATIC_ROOT= os.path.join(BASE_DIR, 'static/')
 SOCIAL_AUTH_GOOGLE_OAUTH2_URL_NAMESPACE = 'google'
 DRFSO2_URL_NAMESPACE = 'drf'
 NAMESPACE = 'oauth2'
-
-ENCRYPTION_KEY = ""
-ENCRYPTION_DISABLED_PATHS = ["/decrypt/", "/encrypt/", "/auth/convert-token/"]
 
 
 # settings.py

@@ -1,12 +1,9 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import AppDetailsViewSet
 
-# Create a router for your viewsets
-router = DefaultRouter()
-router.register(r'app-details', AppDetailsViewSet, basename='app-details')
+from schedifyApp.before_login.views import AppDetailsAPIView
 
 # Define the urlpatterns for this package
 urlpatterns = [
-    path('', include(router.urls)),  # Includes all routes registered in the router
+    path('info', AppDetailsAPIView.as_view(), name='appdetails'),
 ]

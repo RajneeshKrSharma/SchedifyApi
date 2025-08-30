@@ -18,6 +18,7 @@ def _tail_lines(path, max_lines=200):
 @staff_member_required
 def api_logs_json(request):
     n = int(request.GET.get("n", 200))
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~>")
     return JsonResponse({"lines": _tail_lines(LOG_FILE, max_lines=min(n, 1000))})
 
 

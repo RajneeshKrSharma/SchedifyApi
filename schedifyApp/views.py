@@ -11,6 +11,7 @@ from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .middlewares import _get_encryption_key
 from .models import Content
 from .serializers import ContentSerializer
 from .utils import compress_string  # Import the utility function
@@ -23,11 +24,10 @@ def encrypt_data(request):
     The data and key are passed in the request body.
     """
     # Extract data and key from the request
-    data = request.data.get("data")
-    key = request.data.get("key")
+    data = request.data.get("hayusit")
 
-    if data is None or key is None:
-        return Response({"error": "Both 'data' and 'key' are required."}, status=status.HTTP_400_BAD_REQUEST)
+    if data is None:
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         # Convert data to JSON string if it's not already a string
@@ -35,7 +35,7 @@ def encrypt_data(request):
             data = json.dumps(data)  # Serialize non-string data to JSON string
 
         # Ensure the key is 32 bytes long (for AES-256)
-        key = key.ljust(32, '0')[:32].encode()  # Pad or truncate key to 32 bytes
+        key = _get_encryption_key()
 
         # Generate a random IV (Initialization Vector)
         iv = os.urandom(16)
@@ -56,8 +56,8 @@ def encrypt_data(request):
         iv_base64 = base64.b64encode(iv).decode()
 
         return Response({
-            "encrypted_data": encrypted_data_base64,
-            "iv": iv_base64
+            "atejhdyops": encrypted_data_base64,
+            "ezzqweta": iv_base64
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
@@ -72,19 +72,15 @@ def decrypt_data(request):
     """
     # Extract encrypted data, key, and IV from the request
     print("request.data --> ", request.data)
-    encrypted_data = request.data.get("encrypted_data")
-    key = request.data.get("key")
-    iv = request.data.get("iv")
+    encrypted_data = request.data.get("atejhdyops")
+    iv = request.data.get("ezzqweta")
 
-    if encrypted_data is None or key is None or iv is None:
-        return Response({
-            "error": "All fields 'encrypted_data', 'key', and 'iv' are required."
-        }, status=status.HTTP_400_BAD_REQUEST)
+    if encrypted_data is None or iv is None:
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         # Ensure the key is 32 bytes long (for AES-256)
-        key = key.ljust(32, '0')[:32].encode()  # Pad or truncate key to 32 bytes
-
+        key = _get_encryption_key()
         # Decode the encrypted data and IV from Base64
         encrypted_data = base64.b64decode(encrypted_data)
         iv = base64.b64decode(iv)
@@ -108,7 +104,7 @@ def decrypt_data(request):
             decrypted_data = decrypted_data.decode()
 
         return Response({
-            "decrypted_data": decrypted_data
+            "bkelqrets": decrypted_data
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
