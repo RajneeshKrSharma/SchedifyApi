@@ -5,15 +5,14 @@ from django.utils.timezone import localtime
 from schedifyApp.before_login.models import *
 from schedifyApp.login.models import CustomUser, AuthToken, CustomUserProfile, IST, AppUser, EmailIdRegistration
 from schedifyApp.models import Content
-from schedifyApp.schedule_list.models import ScheduleItemList, ItemType, ScheduleListAttachments, \
+from schedifyApp.schedule_list.models import ScheduleItemList, ItemType, \
     ScheduleNotificationStatus
 from .address.models import Address
 from .communication.models import OtpConfig
 from .lists.split_expenses.models import *
 from .post_login.models import *
 from .session.models import SessionDataConfig, Session
-from .weather.models import WeatherForecast, WeatherPincodeMappedData, \
-    ImageAsset, FileAsset, WeatherStatusImages
+from .weather.models import WeatherForecast, WeatherPincodeMappedData
 
 
 @admin.register(Content)
@@ -52,7 +51,8 @@ class TokenAdmin(admin.ModelAdmin):
 
 @admin.register(ScheduleItemList)
 class ScheduleItemListAdmin(admin.ModelAdmin):
-    list_display = ['id', 'dateTime', 'title', 'lastScheduleOn', 'isWeatherNotifyEnabled', 'isItemPinned', 'subTitle', 'isArchived', 'priority', 'user_id']
+    list_display = ['id', 'dateTime', 'title', 'lastScheduleOn',
+                    'isWeatherNotifyEnabled', 'pincode', 'isItemPinned', 'subTitle', 'isArchived', 'priority', 'user_id']
 
 
 @admin.register(CustomUserProfile)
@@ -244,11 +244,6 @@ class CollaboratorDetailAdmin(admin.ModelAdmin):
 class OtpConfigAdmin(admin.ModelAdmin):
     list_display = (("via_mail",))
 
-
-@admin.register(ScheduleListAttachments)
-class ScheduleListAttachmentsAdmin(admin.ModelAdmin):
-    list_display = ["file", "user"]
-
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'created_on')
@@ -307,7 +302,7 @@ class WeatherForecastAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'pincode', 'unique_key', 'timeStamp', 'forecast_time', 'weatherType', 'temperature_celsius',
         'humidity_percent', 'scheduleItem', 'updated_count', 'notify_count',
-        'next_notify_in', 'next_notify_at', 'notify_medium',
+        'next_notify_in', 'next_notify_at', 'notify_medium', 'elig_diff', 'elig_diff_unit',
         'isActive', 'last_updated'
     )
     list_filter = ('pincode', 'weatherType', 'notify_medium', 'isActive')
@@ -322,20 +317,6 @@ class WeatherForecastAdmin(admin.ModelAdmin):
 class WeatherPincodeMappedDataAdmin(admin.ModelAdmin):
     list_display = ['pincode', 'weather_data', 'last_updated', 'updated_count']
     search_fields = ['pincode']
-
-
-@admin.register(ImageAsset)
-class ImageAdmin(admin.ModelAdmin):
-    list_display = ['id', 'photo', 'date']
-
-@admin.register(FileAsset)
-class FileAdmin(admin.ModelAdmin):
-    list_display = ['id', 'date', 'file']
-
-@admin.register(WeatherStatusImages)
-class WeatherStatusImagesAdmin(admin.ModelAdmin):
-    list_display = ['id', 'url', 'status']
-
 
 @admin.register(SessionDataConfig)
 class SessionDataConfigAdmin(admin.ModelAdmin):

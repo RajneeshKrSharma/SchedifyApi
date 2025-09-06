@@ -37,6 +37,15 @@
       color: white;
       margin-bottom: 25px;
     }
+    #time-diff-eligibility {
+      font-family: 'Courier New', monospace;
+      font-weight: 600;
+      letter-spacing: 1px;
+      animation: fadeIn 1s ease-in-out;
+      font-size: 1.5rem;
+      color: white;
+      margin-bottom: 25px;
+    }
 
     @keyframes fadeIn {
       from {
@@ -207,6 +216,10 @@
     <!-- Digital Clock -->
     <div id="digital-clock" class="text-center"></div>
 
+    <div id="time-diff-eligibility">
+      <span class="fw-normal small">* Notify Valid for T.D.V >= {{eligible_time_diff}} {{eligible_time_diff_unit}}</span>
+    </div>
+
     <!-- Search and Filters -->
     <form method="get" class="mb-3 d-flex flex-wrap search-box" role="search">
       <input type="text" name="q" class="form-control me-2" placeholder="Search by pincode, type, or description" value="{{ query }}" />
@@ -229,17 +242,28 @@
               <th>Sl. No.</th>
               <th>Last Updated</th>
               <th>Status</th>
-              <th>Scheduled Date & Time</th>
-              <th>Scheduled Item Created At</th>
-              <th>Scheduled ID</th>
+              <th>Sch. D & T</th>
+              <th>Sch. ID</th>
               <th>Pincode</th>
               <th>Forecast Time</th>
               <th>Type</th>
-              <th>Description</th>
+              <th>Desc.</th>
               <th>
                 <div class="d-flex flex-column align-items-center">
-                  <span>Total Update</span>
+                  <span>T.U</span>
                   <span class="fw-normal small">(Create + Update)</span>
+                </div>
+              </th>
+              <th>
+                <div class="d-flex flex-column align-items-center">
+                  <span>Elig. T.D</span>
+                  <span class="fw-normal small">(Value)</span>
+                </div>
+              </th>
+              <th>
+                <div class="d-flex flex-column align-items-center">
+                  <span>Elig. T.D</span>
+                  <span class="fw-normal small">(Unit)</span>
                 </div>
               </th>
               <th>Notify In</th>
@@ -251,27 +275,34 @@
             {% for forecast in forecasts %}
             <tr class="{% if forecast.isActive %}active-row{% endif %}">
               <td>{{ forloop.counter }}</td>
-              <td>{{ forecast.last_updated|date:"F j, Y, g:i:s A" }}</td>
+              <td>{{ forecast.last_updated|date:"d M y, g:ia" }}</td>
               <td>
                 {% if forecast.isActive %}
                 <div class="d-flex flex-column align-items-center">
                   <span class="badge bg-success blinker">Active</span>
                 </div>
                 {% else %}
-                <span class="badge bg-secondary">Expired</span>
+                <span class="badge bg-secondary">Executed</span>
                 {% endif %}
               </td>
-              <td>{{ forecast.scheduleItem.dateTime }}</td>
-              <td>{{ forecast.scheduleItem.lastScheduleOn }}</td>
+              <td>{{ forecast.scheduleItem.dateTime|date:"d M y, g:ia" }}</td>
               <td>{{ forecast.scheduleItem.id }}</td>
               <td>{{ forecast.pincode }}</td>
-              <td>{{ forecast.forecast_time }}</td>
+              <td>{{ forecast.forecast_time|date:"d M y, g:ia" }}</td>
               <td>{{ forecast.weatherType }}</td>
               <td>{{ forecast.weatherDescription }}</td>
               <td>{{ forecast.updated_count }}</td>
+              <td>{{ forecast.elig_diff|floatformat:3 }}</td>
+              <td>{{ forecast.elig_diff_unit }}</td>
               <td>{{ forecast.next_notify_in }}</td>
               <td>{{ forecast.notify_count }}</td>
-              <td>{{ forecast.next_notify_at }}</td>
+              <td>
+                {% if forecast.next_notify_at %}
+                  {{ forecast.next_notify_at|date:"d M y, g:ia" }}
+                {% else %}
+                  NA
+                {% endif %}
+              </td>
             </tr>
             {% empty %}
             <tr>

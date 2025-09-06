@@ -38,7 +38,7 @@ urlpatterns = [
     path('api/list/', include('schedifyApp.lists.split_expenses.urls')),  # Includes all app-level URLs
     path('api/communication/', include('schedifyApp.communication.urls')),  # Includes all app-level URLs
     path('api/address/', include('schedifyApp.address.urls')),  # Includes all app-level URLs
-    path('api/weather/', include('schedifyApp.weather.urls')),  # Includes all app-level URLs
+    path('weather/', include('schedifyApp.weather.urls')),  # Includes all app-level URLs
     path('helper/', include('schedifyApp.deep_links.urls')),  # Includes all app-level URLs
     path('api/session/', include('schedifyApp.session.urls')),
     path('api/bulk/', include('schedifyApp.data_insert.urls')),

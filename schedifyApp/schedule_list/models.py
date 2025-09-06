@@ -4,6 +4,7 @@ import pytz
 from django.contrib.auth.models import User
 from django.db import models
 
+from schedifyApp.address.models import Address, validate_pincode
 from schedifyApp.login.models import EmailIdRegistration, AppUser
 
 
@@ -24,18 +25,8 @@ class ScheduleItemList(models.Model):
     isArchived = models.BooleanField(default=False)
     priority = models.IntegerField(default=0)
     isWeatherNotifyEnabled = models.BooleanField(default=False)
-
+    pincode = models.CharField(max_length=6, validators=[validate_pincode], null=True, blank=True)
     objects = models.Manager()
-
-
-class ScheduleListAttachments(models.Model):
-    user = models.ForeignKey(
-        ScheduleItemList,
-        on_delete=models.CASCADE,
-        related_name='attachments'
-    )
-    file = models.FileField(upload_to='schedule_list/attachments/files/', blank=True, null=True)
-
 
 
 class ScheduleNotificationStatus(models.Model):

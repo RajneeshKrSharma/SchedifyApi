@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-
+from selectors import SelectSelector
 
 from django.utils.timezone import now, is_naive, make_aware
 from pytz import timezone
@@ -8,6 +8,7 @@ from pytz import timezone
 from schedifyApp.core.weather_utils import send_weather_notification, create_pincode_weather_data_entry, \
     update_pincode_weather_data_entry, fetch_weather_data_by_pincode, get_user_mapped_entry, \
     get_pincode_weather_data_entry, get_weather_forecast_entry, get_pincode_weather_data_single_entry
+from schedifyApp.login.models import IST
 from schedifyApp.weather.models import WeatherPincodeMappedData
 
 from schedifyApp.core.weather_utils import (
@@ -26,51 +27,12 @@ def round_down_to_nearest_3hr(dt: datetime) -> datetime:
 
 
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo  # Requires Python 3.9+
-IST = ZoneInfo("Asia/Kolkata")
-
-class TimeUnitType(Enum):
-    Hour = 'hour'
-    Minute = 'minute'
-    Second = "second"
-
 DIVISOR = 3600
-def getTimeDelta(
-        value: int,
-        unit: TimeUnitType
-) -> timedelta:
-    if unit == TimeUnitType.Hour:
-         return timedelta(hours=value)
-    elif unit == TimeUnitType.Minute:
-        return timedelta(minutes=value)
-    else:
-        return timedelta(seconds=value)
-    # if unit == TimeUnitType.Hour:
-    #     return timedelta(minutes=value)
-    # else:
-    #     return timedelta(minutes=value)
-
-def get_adjusted_time(
-    current_time: datetime,
-    time_diff
-) -> datetime | None:
-    print(f"get_adjusted_time ~~~~~~~~~~~~~~~~> time-diff: ${time_diff}")
-
-    if time_diff >= 3:
-        td = current_time + getTimeDelta(3, TimeUnitType.Hour)
-        return td
-    elif time_diff >= 2:
-        td = current_time + getTimeDelta(2, TimeUnitType.Hour)
-        return td
-    elif time_diff >= 1:
-        td = current_time + getTimeDelta(1, TimeUnitType.Hour)
-        return td
-    else:
-        return None
 
 def get_adjusted_time_on_update(input_time: datetime, time_diff) -> datetime | None:
     print(f"get_adjusted_time_on_update -------------------> time-diff: ${time_diff}")
-
+    from schedifyApp.weather.utils.notify_helper import getTimeDelta
+    from schedifyApp.weather.utils.notify_enums import TimeUnitType
     if time_diff >= 3:
         td = input_time + getTimeDelta(3, TimeUnitType.Hour)
         return td
@@ -82,64 +44,6 @@ def get_adjusted_time_on_update(input_time: datetime, time_diff) -> datetime | N
         return td
     else:
         return None
-
-def get_time_until_update(
-    time_diff
-) -> str:
-    print(f"get_time_until_update ~~~~~~~~~~~~~~~~~> time-diff: ${time_diff}")
-
-    if time_diff >= 3:
-        delay = getTimeDelta(3, TimeUnitType.Hour)
-    elif time_diff >= 2:
-        delay = getTimeDelta(2, TimeUnitType.Hour)
-    elif time_diff >= 1:
-        delay = getTimeDelta(1, TimeUnitType.Hour)
-    else:
-        return f"NOTIFY BLOCKED: ${"{:.2f}".format(time_diff)}"
-
-    total_seconds = int(delay.total_seconds())
-    hours = total_seconds // 3600
-    minutes = (total_seconds % 3600) // 60
-    seconds = total_seconds % 60
-
-    parts = []
-    if hours > 0:
-        parts.append(f"{hours} hr")
-    if minutes > 0:
-        parts.append(f"{minutes} min")
-    if seconds > 0:
-        parts.append(f"{seconds} sec")
-
-    return " ".join(parts) if parts else "NA"
-
-
-def get_time_until_update_on_update(time_diff) -> str:
-    print(f"get_time_until_update_on_update -------------------------> time-diff: ${time_diff}")
-
-    if time_diff >= 3:
-        delay = getTimeDelta(3, TimeUnitType.Hour)
-    elif time_diff >= 2:
-        delay = getTimeDelta(2, TimeUnitType.Hour)
-    elif time_diff >= 1:
-        delay = getTimeDelta(1, TimeUnitType.Hour)
-    else:
-        return f"NOTIFY BLOCKED: {"{:.2f}".format(time_diff)}"
-
-
-    total_seconds = int(delay.total_seconds())
-    hours = total_seconds // 3600
-    minutes = (total_seconds % 3600) // 60
-    seconds = total_seconds % 60
-
-    parts = []
-    if hours > 0:
-        parts.append(f"{hours} hr")
-    if minutes > 0:
-        parts.append(f"{minutes} min")
-    if seconds > 0:
-        parts.append(f"{seconds} sec")
-
-    return " ".join(parts) if parts else "NA"
 
 
 def get_weather_forcast_data_for_pin_codes(pincodes) -> dict:
@@ -159,7 +63,6 @@ def format_datetime_or_none(dt):
 
 
 def prepare_forcast_create_request(weather_data, notifyTime, notifyInTime, notifyMedium=None) -> dict:
-    print(f"notifyMedium ---> {notifyMedium}")
     weather_data["updated_count"] = 1
     weather_data["next_notify_in"] = notifyInTime
     weather_data["notify_count"] = 0
@@ -173,7 +76,7 @@ def prepare_forcast_create_request(weather_data, notifyTime, notifyInTime, notif
 def prepare_forcast_update_request(
     current_time: datetime,
     existing_weather_forecast_data,
-    nextNotifyAt: datetime,
+    notifyTime: datetime,
     scheduledItem,
     isNotifyAccountable,
     time_diff = None
@@ -192,17 +95,14 @@ def prepare_forcast_update_request(
             """
 
     if isNotifyAccountable:
-        getCalculatedNextNotifyTime = get_adjusted_time_on_update(
-                nextNotifyAt,
-                time_diff
-            )
+        from schedifyApp.weather.utils.notify_helper import get_time_until_update
         weather_data.update({
             "updated_count": existing_weather_forecast_data.updated_count + 1,
             "notify_count": existing_weather_forecast_data.notify_count + 1,
-            "next_notify_in": get_time_until_update_on_update(
+            "next_notify_in": get_time_until_update(
                 time_diff
             ),
-            "next_notify_at": format_datetime_or_none(getCalculatedNextNotifyTime),
+            "next_notify_at": format_datetime_or_none(notifyTime),
             "isWeatherNotifyEnabled": scheduledItem["isWeatherNotifyEnabled"]
         })
     else:
@@ -217,6 +117,7 @@ def prepare_forcast_update_request_for_schedule_obj(
     current_time: datetime,
     existing_weather_forecast_data,
     nextNotifyAt: datetime,
+    notifyTime: datetime,
     scheduledItem,
     isNotifyAccountable,
     time_diff = None
@@ -239,13 +140,14 @@ def prepare_forcast_update_request_for_schedule_obj(
                 nextNotifyAt,
                 time_diff
             )
+        from schedifyApp.weather.utils.notify_helper import get_time_until_update
         weather_data.update({
             "updated_count": existing_weather_forecast_data.updated_count + 1,
             "notify_count": existing_weather_forecast_data.notify_count + 1,
-            "next_notify_in": get_time_until_update_on_update(
+            "next_notify_in": get_time_until_update(
                 time_diff
             ),
-            "next_notify_at": format_datetime_or_none(getCalculatedNextNotifyTime),
+            "next_notify_at": format_datetime_or_none(notifyTime),
             "isWeatherNotifyEnabled": scheduledItem.isWeatherNotifyEnabled
         })
     else:
@@ -258,9 +160,8 @@ def prepare_forcast_update_request_for_schedule_obj(
 
 
 def prepare_forcast_update_request_scheduleItem_obj(
-    current_time: datetime,
     existing_weather_forecast_data,
-    nextNotifyAt: datetime,
+    notifyTime: datetime,
     scheduledItem,
     isNotifyAccountable,
     time_diff = None
@@ -279,17 +180,14 @@ def prepare_forcast_update_request_scheduleItem_obj(
             """
 
     if isNotifyAccountable:
-        getCalculatedNextNotifyTime = get_adjusted_time_on_update(
-                nextNotifyAt,
-                time_diff
-            )
+        from schedifyApp.weather.utils.notify_helper import get_time_until_update
         weather_data.update({
             "updated_count": existing_weather_forecast_data.updated_count + 1,
             "notify_count": existing_weather_forecast_data.notify_count + 1,
-            "next_notify_in": get_time_until_update_on_update(
+            "next_notify_in": get_time_until_update(
                 time_diff
             ),
-            "next_notify_at": format_datetime_or_none(getCalculatedNextNotifyTime),
+            "next_notify_at": format_datetime_or_none(notifyTime),
             "isWeatherNotifyEnabled": scheduledItem.isWeatherNotifyEnabled
         })
     else:
@@ -315,7 +213,6 @@ class CustomJSONEncoder(json.JSONEncoder):
             return {
                 "id": obj.id,
                 "user_id": obj.user.id if obj.user else None,
-                "google_auth_user_id": obj.google_auth_user.id if obj.google_auth_user else None,
                 "dateTime": obj.dateTime.strftime("%Y-%m-%d %H:%M:%S"),
                 "title": obj.title,
                 "isItemPinned": obj.isItemPinned,
@@ -455,6 +352,8 @@ def trigger_task():
                 """ Logic to find weather data for scheduled_date_time from fetched Weather api data """
                 pinned_weather_forecast_list = pincode_weather_data.get("weather_data").get("list", [])
                 rounded_schedule = round_down_to_nearest_3hr(schedule_items_date_time)
+                from schedifyApp.weather.utils.notify_helper import getTimeDelta
+                from schedifyApp.weather.utils.notify_enums import TimeUnitType
                 revisedScheduleDateTime = schedule_items_date_time - getTimeDelta(1, TimeUnitType.Hour)
 
                 matched_forecast = None
@@ -572,6 +471,7 @@ def trigger_task():
                     time_diff = round(time_diff)
                     print(f"WHILE CREATE : round off time_diff of abs((revisedScheduleDateTime - current_time) -> {time_diff}")
 
+                    from schedifyApp.weather.utils.notify_helper import get_adjusted_time
                     assumed_notify_time = get_adjusted_time(current_time, time_diff)
                     print(f"assumed_notify_time : {assumed_notify_time}")
 
@@ -590,6 +490,7 @@ def trigger_task():
                     time_diff_for_notifyIn = round(time_diff_for_notifyIn)
                     print(f"time_diff_for_notifyIn round : {time_diff_for_notifyIn}")
 
+                    from schedifyApp.weather.utils.notify_helper import get_time_until_update
                     create_forecast_entry(
                         forecast_data=prepare_forcast_create_request(
                             weather_data=weather_data,

@@ -1,7 +1,7 @@
 import json
 
 from rest_framework import serializers
-from .models import WeatherForecast, WeatherPincodeMappedData, WeatherStatusImages
+from .models import WeatherForecast, WeatherPincodeMappedData
 from ..schedule_list.models import ScheduleItemList
 from ..schedule_list.serializers import ScheduleItemListSerializers
 
@@ -14,7 +14,6 @@ class WeatherForecastSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         raw_schedule_item_data = self.initial_data.get('scheduleItem')
-        print(f"schedule_item_data: {raw_schedule_item_data}")
 
         if raw_schedule_item_data:
             try:
@@ -41,8 +40,3 @@ class WeatherPincodeMappedDataSerializer(serializers.ModelSerializer):
         if WeatherPincodeMappedData.objects.filter(pincode=value).exists():
             raise serializers.ValidationError("This pincode already exists.")
         return value
-
-class WeatherStatusImagesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WeatherStatusImages
-        fields = '__all__'

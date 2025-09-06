@@ -3,18 +3,19 @@ import httpx
 from schedify.settings import OPEN_WEATHER_MAP_API_KEY
 
 
-def fetch_weather_data_by_pincode(pincode):
+def fetch_weather_data_by_pincode(pincode) -> dict | str:
     url = f"https://api.openweathermap.org/data/2.5/forecast?zip={pincode},IN&appid={OPEN_WEATHER_MAP_API_KEY}"
     try:
         response = httpx.get(url)
         if response.status_code == 200:
-            return response.json()
+            return response.json()   # ✅ dict on success
         else:
-            print(f"⚠️ Failed to fetch weather for pincode {pincode}. Status: {response.status_code}")
-            return None
+            return (
+                f"⚠️ Failed to fetch weather for pincode {pincode}. "
+                f"Status: {response.status_code} | {response.text}"
+            )   # ✅ str on error
     except httpx.RequestError as e:
-        print(f"❌ Request error: {e}")
-        return None
+        return f"❌ Request error: {e}"   # ✅ str on error
 
 def get_weather_forecast_entry():
     url = "http://localhost:8000/api/weather/forecast?expired=false"
@@ -240,17 +241,17 @@ def get_schedule_item_single_entry(key, token):
         return None
 
 
-def send_weather_push_notification(request):
-    url = "https://schedify.pythonanywhere.com/api/communication/send-weather-push-notify"
+def send_weather_push_notification(request) -> str:
+    url = "http://127.0.0.1:8000/api/communication/send-weather-push-notify"
     #print(f"request: {request}")
     try:
         response = httpx.post(url, json=request)
         if response.status_code == 200:
             print("✅ Push notification sent successfully!")
-            return response.json()
+            return "✅ Push notification sent successfully!"
         else:
-            print(f"⚠️ Failed to send push notification. Status: {response.status_code}")
-            return None
+            print(f"⚠️ Failed to send push notification. Status: {response.status_code} | {response.text}")
+            return f"⚠️ Failed to send push notification. Status: {response.status_code} | {response.text}"
     except httpx.RequestError as e:
         print(f"❌ Request error: {e}")
-        return None
+        return f"❌ Request error: {e}"

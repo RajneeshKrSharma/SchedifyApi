@@ -4,15 +4,6 @@ from django.db import models
 
 from schedifyApp.schedule_list.models import ScheduleItemList
 
-class ImageAsset(models.Model):
-    photo = models.ImageField(upload_to='pictures')
-    date = models.DateTimeField(auto_now_add=True)
-
-class FileAsset(models.Model):
-    date = models.DateTimeField(auto_now_add=True)
-    file = models.FileField(upload_to='files')
-
-
 class NotifyMediumType(Enum):
     PUSH_NOTIFICATION = 'PUSH_NOTIFICATION'
     EMAIL = 'EMAIL'
@@ -33,6 +24,8 @@ class WeatherForecast(models.Model):
     scheduleItem = models.ForeignKey(ScheduleItemList, on_delete=models.CASCADE, related_name="schedule_list", null=True)
     updated_count = models.IntegerField()
     notify_count = models.IntegerField(null=True)
+    elig_diff = models.FloatField(null=True)
+    elig_diff_unit = models.CharField(max_length=10, null=True, blank=True)
     next_notify_in = models.CharField(max_length=100, null=True, blank=True)
     next_notify_at = models.DateTimeField(null=True)
     notify_medium = models.CharField(max_length=20, choices= NotifyMediumType.choices())
@@ -52,22 +45,3 @@ class WeatherPincodeMappedData(models.Model):
     updated_count = models.IntegerField(default=0)
 
     objects = models.Manager()
-
-
-class WeatherStatusImages(models.Model):
-    class WeatherStatus(models.TextChoices):
-        SUNNY = 'CLEAR', 'CLEAR'
-        CLOUDY = 'CLOUD', 'Cloud'
-        RAINY = 'RAIN', 'Rain'
-        STORMY = 'STORM', 'Storm'
-        SNOWY = 'SNOW', 'Snow'
-        FOGGY = 'FOG', 'Fog'
-        DRIZZLY = 'DRIZZLE', 'Drizzle'
-        THUNDERY = 'THUNDER', 'Thunder'
-
-    url = models.URLField(max_length=500)
-    status = models.CharField(max_length=20, choices=WeatherStatus.choices)
-    objects = models.Manager()
-
-    def __str__(self):
-        return f"{self.status} - {self.url}"

@@ -6,9 +6,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from schedifyApp.CustomAuthentication import CustomAuthentication
-from schedifyApp.schedule_list.models import ScheduleItemList, ScheduleListAttachments, ScheduleNotificationStatus
-from schedifyApp.schedule_list.serializers import ScheduleItemListSerializers, \
-    ScheduleListAttachmentUploadSerializer, ScheduleNotificationStatusSerializer
+from schedifyApp.schedule_list.models import ScheduleItemList, ScheduleNotificationStatus
+from schedifyApp.schedule_list.serializers import ScheduleItemListSerializers, ScheduleNotificationStatusSerializer
 
 from rest_framework.views import APIView
 
@@ -146,33 +145,6 @@ class ScheduleItemView(APIView):
             },
             status=status.HTTP_200_OK
         )
-
-
-class UploadScheduleAttachmentsView(APIView):
-    authentication_classes = [CustomAuthentication]  # Use the custom authentication class
-    permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
-
-    def post(self, request):
-        schedule_id = request.data.get('schedule_id')
-        try:
-            schedule = ScheduleItemList.objects.get(id=schedule_id)
-        except ScheduleItemList.DoesNotExist:
-            return Response({"error": "Schedule not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        files = request.FILES.getlist('files')
-        uploaded_files = []
-
-        for f in files:
-            attachment = ScheduleListAttachments.objects.create(
-                user=schedule,
-                file=f
-            )
-            uploaded_files.append(attachment)
-
-        serializer = ScheduleListAttachmentUploadSerializer(uploaded_files, many=True)
-        return Response({"attachments": serializer.data}, status=status.HTTP_201_CREATED)
-
 
 class ScheduleNotificationStatusAPIView(APIView):
     authentication_classes = [CustomAuthentication]  # Use the custom authentication class

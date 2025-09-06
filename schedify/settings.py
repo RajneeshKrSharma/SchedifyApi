@@ -25,11 +25,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-kmfy0yzvl$ky!iw$z++e0$(r-4-xw(gk53)0glmbl+ngq%0h@i'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['10.0.2.2', '127.0.0.1', 'schedify.pythonanywhere.com']
 
-dotenv_path = "/home/Schedify/.env"
+dotenv_path = "C:\\Users\\rajne\\PycharmProjects\\SchedifyApi\\.env"
 load_dotenv(dotenv_path)
 
 EMAIL_HOST_USER_KEY = os.getenv("email_host_user")
@@ -67,8 +67,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'schedifyApp.RequestDecryptMiddleware.DecryptRequestMiddleware',
-    'schedifyApp.middlewares.EncryptResponseMiddleware',
+    #'schedifyApp.RequestDecryptMiddleware.DecryptRequestMiddleware',
+    #'schedifyApp.middlewares.EncryptResponseMiddleware',
     'schedifyApp.api_logging.api_logging_middleware.ApiHitLoggingMiddleware'
 ]
 
