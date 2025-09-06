@@ -68,8 +68,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    #'schedifyApp.RequestDecryptMiddleware.DecryptRequestMiddleware',
-    #'schedifyApp.middlewares.EncryptResponseMiddleware',
+    'schedifyApp.RequestDecryptMiddleware.DecryptRequestMiddleware',
+    'schedifyApp.middlewares.EncryptResponseMiddleware',
     'schedifyApp.api_logging.api_logging_middleware.ApiHitLoggingMiddleware'
 ]
 
