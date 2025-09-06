@@ -29,7 +29,8 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['10.0.2.2', '127.0.0.1', 'schedify.pythonanywhere.com']
 
-dotenv_path = "C:\\Users\\rajne\\PycharmProjects\\SchedifyApi\\.env"
+#dotenv_path = "C:\\Users\\rajne\\PycharmProjects\\SchedifyApi\\.env"
+dotenv_path = "/home/Schedify/.env"
 load_dotenv(dotenv_path)
 
 EMAIL_HOST_USER_KEY = os.getenv("email_host_user")
