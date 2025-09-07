@@ -29,8 +29,8 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['10.0.2.2', '127.0.0.1', 'schedify.pythonanywhere.com']
 
-#dotenv_path = "C:\\Users\\rajne\\PycharmProjects\\SchedifyApi\\.env"
 dotenv_path = "/home/Schedify/.env"
+#dotenv_path = "C:\\Users\\rajne\\PycharmProjects\\SchedifyApi\\.env"
 load_dotenv(dotenv_path)
 
 EMAIL_HOST_USER_KEY = os.getenv("email_host_user")
@@ -42,6 +42,7 @@ GOOGLE_CLIENT_ID_KEY = os.getenv("google_client_id")
 OPEN_WEATHER_MAP_API_KEY = os.getenv("open_weather_map_api_key")
 ENCRYPTION_KEY = os.getenv("encryption_key")
 ENCRYPTION_DISABLED_PATHS = os.getenv("encryption_disabled_path", "").split(",")
+BASE_URL = os.getenv("base_url")
 
 # Application definition
 

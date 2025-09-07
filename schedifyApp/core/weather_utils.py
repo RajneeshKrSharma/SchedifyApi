@@ -1,7 +1,8 @@
 import httpx
 
+from schedify import settings
 from schedify.settings import OPEN_WEATHER_MAP_API_KEY
-
+BASE_URL = getattr(settings, "ENCRYPTION_DISABLED_PATHS", [])
 
 def fetch_weather_data_by_pincode(pincode) -> dict | str:
     url = f"https://api.openweathermap.org/data/2.5/forecast?zip={pincode},IN&appid={OPEN_WEATHER_MAP_API_KEY}"
@@ -18,7 +19,7 @@ def fetch_weather_data_by_pincode(pincode) -> dict | str:
         return f"❌ Request error: {e}"   # ✅ str on error
 
 def get_weather_forecast_entry():
-    url = "http://localhost:8000/api/weather/forecast?expired=false"
+    url = f"{BASE_URL}/api/weather/forecast?expired=false"
     try:
         response = httpx.get(url)
         if response.status_code == 200:
@@ -32,7 +33,7 @@ def get_weather_forecast_entry():
         return None
 
 def create_forecast_entry(forecast_data):
-    url = "http://localhost:8000/api/weather/forecast"
+    url = f"{BASE_URL}/api/weather/forecast"
     print(f"Request create for forecast_data: {forecast_data}")
     try:
         response = httpx.post(url, json=forecast_data)
@@ -48,7 +49,7 @@ def create_forecast_entry(forecast_data):
 
 
 def update_forecast_entry(forecast_id, forecast_data):
-    url = f"http://localhost:8000/api/weather/forecast?forecast_id={forecast_id}"
+    url = f"{BASE_URL}/api/weather/forecast?forecast_id={forecast_id}"
     print(f"request data for forecast_data update : {forecast_data}")
     try:
         response = httpx.patch(url, json=forecast_data)
@@ -64,7 +65,7 @@ def update_forecast_entry(forecast_id, forecast_data):
 
 
 def send_weather_notification(request):
-    url = "https://schedify.pythonanywhere.com/api/communication/send-weather-notify-email"
+    url = f"{BASE_URL}/api/communication/send-weather-notify-email"
     #print(f"request: {request}")
     try:
         response = httpx.post(url, json=request)
@@ -89,7 +90,7 @@ def create_pincode_weather_data_entry(pincode_weather_data):
 
     #print(f"requestBody: {requestBody}")
 
-    url = "http://localhost:8000/api/weather/pincode-weather-mapping"
+    url = f"{BASE_URL}/api/weather/pincode-weather-mapping"
     try:
         response = httpx.post(url, json=requestBody)
         if response.status_code == 201:
@@ -115,7 +116,7 @@ def create_weather_data_for_pincode_entry(pincode, weather_data):
 
     #print(f"requestBody: {requestBody}")
 
-    url = "http://localhost:8000/api/weather/pincode-weather-mapping"
+    url = f"{BASE_URL}/api/weather/pincode-weather-mapping"
     try:
         response = httpx.post(url, json=requestBody)
         if response.status_code == 201:
@@ -141,7 +142,7 @@ def update_pincode_weather_data_entry(pincode_weather_data, last_updated_count):
                 "updated_count" : last_updated_count + 1
             }
 
-            url = f"http://localhost:8000/api/weather/pincode-weather-mapping?pincode={key}"
+            url = f"{BASE_URL}/api/weather/pincode-weather-mapping?pincode={key}"
             response = httpx.patch(url, json=request)
 
             if response.status_code == 200:
@@ -162,7 +163,7 @@ def update_weather_data_for_pincode_entry(pincode, weather_data, last_updated_co
             "updated_count": last_updated_count + 1
         }
 
-        url = f"http://localhost:8000/api/weather/pincode-weather-mapping?pincode={pincode}"
+        url = f"{BASE_URL}/api/weather/pincode-weather-mapping?pincode={pincode}"
         response = httpx.patch(url, json=request)
 
         if response.status_code == 200:
@@ -178,7 +179,7 @@ def update_weather_data_for_pincode_entry(pincode, weather_data, last_updated_co
 
 def get_pincode_weather_data_entry():
     try:
-        url = f"http://localhost:8000/api/weather/pincode-weather-mapping"
+        url = f"{BASE_URL}/api/weather/pincode-weather-mapping"
         response = httpx.get(url)
 
         if response.status_code == 200:
@@ -193,7 +194,7 @@ def get_pincode_weather_data_entry():
 
 def get_pincode_weather_data_single_entry(key):
     try:
-        url = f"http://localhost:8000/api/weather/pincode-weather-mapping?pincode={key}"
+        url = f"{BASE_URL}/api/weather/pincode-weather-mapping?pincode={key}"
         response = httpx.get(url)
 
         if response.status_code == 200:
@@ -208,7 +209,7 @@ def get_pincode_weather_data_single_entry(key):
 
 def get_user_mapped_entry():
     try:
-        url = f"http://localhost:8000/api/weather/get-user-mapping"
+        url = f"{BASE_URL}/api/weather/get-user-mapping"
         response = httpx.get(url)
 
         if response.status_code == 200:
@@ -224,7 +225,7 @@ def get_user_mapped_entry():
 
 def get_schedule_item_single_entry(key, token):
     try:
-        url = f"http://127.0.0.1:8000/api/schedule-list/schedule-items/{key}"
+        url = f"{BASE_URL}/api/schedule-list/schedule-items/{key}"
         headers = {
             "Authorization": f"{token}"
         }
@@ -242,8 +243,9 @@ def get_schedule_item_single_entry(key, token):
 
 
 def send_weather_push_notification(request) -> str:
-    url = "http://127.0.0.1:8000/api/communication/send-weather-push-notify"
+    url = f"{BASE_URL}/api/communication/send-weather-push-notify"
     #print(f"request: {request}")
+    print(f"request ----------> {request}")
     try:
         response = httpx.post(url, json=request)
         if response.status_code == 200:

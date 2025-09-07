@@ -479,21 +479,16 @@ def performNotifyCheck(pincode, scheduleItem, userEmailId, fcmToken, notifyMediu
             else:
                 nextNotifyAt = nextNotifyAt.astimezone(ist)
 
-            isTimeToNotifyWithUpdate = nextNotifyAt < current_time
-            print(f"💡 isTimeToSendEmailWithUpdate: {isTimeToNotifyWithUpdate} | Time left: {abs(nextNotifyAt - current_time)}")
-            logs_result_dict[f"{get_formatted_datetime()}"] = f"💡 isTimeToSendEmailWithUpdate: {isTimeToNotifyWithUpdate} | Time left: {abs(nextNotifyAt - current_time)}"
-
-
-            print(f"⮞ nextNotifyAt: nextNotifyAt | current_time: {current_time}")
-            logs_result_dict[f"{get_formatted_datetime()}"] = f"⮞ nextNotifyAt: nextNotifyAt | current_time: {current_time}"
-
+            isTimeToNotify = nextNotifyAt < current_time
+            print(f"💡 isTimeToNotify: {isTimeToNotify} | Time left: {abs(nextNotifyAt - current_time)}")
+            logs_result_dict[f"{get_formatted_datetime()}"] = f"💡 isTimeToNotify: {isTimeToNotify} | Time left: {abs(nextNotifyAt - current_time)}"
 
             print(f"⮞ nextNotifyAt: {nextNotifyAt} | revisedScheduleDateTime: {revisedScheduleDateTime}")
             logs_result_dict[f"{get_formatted_datetime()}"] = f"⮞ nextNotifyAt: {nextNotifyAt} | revisedScheduleDateTime: {revisedScheduleDateTime}"
 
-            time_diff = int(abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / TIME_DIVISOR)
+            time_diff = abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / TIME_DIVISOR
             # ye check kr lo kya aur notify krne ke liye time_diff eligible hai ?
-            logs_result_dict[f"{get_formatted_datetime()}"] = f"⮞ Is eligible for next notify, time_diff -> {time_diff}"
+            logs_result_dict[f"{get_formatted_datetime()}"] = f"⮞ Is satisfy eligibleTimeDifferenceToNotify(TIME_DIVISOR), time_diff -> {time_diff}"
 
 
             if not (time_diff > eligibleTimeDifferenceToNotify(TIME_DIVISOR)):
@@ -509,23 +504,10 @@ def performNotifyCheck(pincode, scheduleItem, userEmailId, fcmToken, notifyMediu
 
             else:
                 # wapas se data calculate kr lo aur
-                print(f"⮞ In fresh data, Eligible under notify condition")
-                logs_result_dict[f"{get_formatted_datetime()}"] = f"⮞ In fresh data, Eligible under notify condition"
+                print(f"⮞ Existing weather forcast data, Is satisfy eligibleTimeDifferenceToNotify(TIME_DIVISOR) : YES")
+                logs_result_dict[f"{get_formatted_datetime()}"] = f"⮞ Existing weather forcast data, Is satisfy eligibleTimeDifferenceToNotify(TIME_DIVISOR) : YES"
 
-                notifyDetails = calculateRevisedNotifyDetails(
-                    current_time=nextNotifyAt,
-                    revisedScheduleDateTime=revisedScheduleDateTime,
-                    logs_result_dict=logs_result_dict,
-                )
-                logs_result_dict.update(notifyDetails["logs_result_dict"])
-                print("⮞ CALCULATION FOR NOTIFY TIME : END 🟢\n")
-                logs_result_dict[f"{get_formatted_datetime()}"] = "⮞ CALCULATION FOR NOTIFY TIME : END 🟢"
-
-                notifyTime = notifyDetails["revisedNotifyTime"]
-                next_notify_time_time_diff = notifyDetails["next_notify_time_time_diff"]
-
-
-                if isTimeToNotifyWithUpdate:
+                if isTimeToNotify:
                     seconds_left = f"⮞ abs(nextNotifyAt - revisedScheduleDateTime).total_seconds(): {abs(nextNotifyAt - revisedScheduleDateTime).total_seconds()}"
                     print(seconds_left)
                     logs_result_dict[f"{get_formatted_datetime()}"] = seconds_left
@@ -538,6 +520,20 @@ def performNotifyCheck(pincode, scheduleItem, userEmailId, fcmToken, notifyMediu
                     hours_left = f"⮞ abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / 3600 (Hours LEFT): {abs(nextNotifyAt - revisedScheduleDateTime).total_seconds() / 3600}"
                     print(hours_left)
                     logs_result_dict[f"{get_formatted_datetime()}"] = hours_left
+
+                    # now calculate next notify time
+
+                    notifyDetails = calculateRevisedNotifyDetails(
+                        current_time=nextNotifyAt,
+                        revisedScheduleDateTime=revisedScheduleDateTime,
+                        logs_result_dict=logs_result_dict,
+                    )
+                    logs_result_dict.update(notifyDetails["logs_result_dict"])
+                    print("⮞ CALCULATION FOR NOTIFY TIME : END 🟢\n")
+                    logs_result_dict[f"{get_formatted_datetime()}"] = "⮞ CALCULATION FOR NOTIFY TIME : END 🟢"
+
+                    notifyTime = notifyDetails["revisedNotifyTime"]
+                    next_notify_time_time_diff = notifyDetails["next_notify_time_time_diff"]
 
                     requestBody = prepare_forcast_update_request_scheduleItem_obj(
                         existing_weather_forecast_data=existing_weather_forecast_data,
@@ -597,7 +593,9 @@ def performNotifyCheck(pincode, scheduleItem, userEmailId, fcmToken, notifyMediu
                                 print("⛔ Error while sending push notification:", e)
                                 logs_result_dict[
                                     f"{get_formatted_datetime()}"] = f"⛔ Error while sending push notification: {e}"
-
+                else:
+                    logs_result_dict[
+                        f"{get_formatted_datetime()}"] = f"⮞ Abhi time ni hua notify krne ke liye !"
 
             # agar time ni hua hai to kuch mt kro
 

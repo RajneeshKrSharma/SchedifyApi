@@ -61,10 +61,8 @@ class EncryptResponseMiddleware:
             raise RuntimeError(f"Encryption failed: {str(e)}")
 
     def __call__(self, request):
-        print("2" * 100)  # Debug middleware call
         # Get the response from the view
         normalized_path = request.path.rstrip('/')
-        print("normalized_path: ", normalized_path)
 
         # Get the response from the view
         response = self.get_response(request)
@@ -74,9 +72,6 @@ class EncryptResponseMiddleware:
             normalized_path.startswith(path.rstrip('/'))
             for path in self.encryption_disabled_paths
         )
-
-        print("encryption_disabled ----> ",encryption_disabled)
-        print("response ----> ", response)
 
         if not encryption_disabled:
             # Skip certain response types like streaming responses
