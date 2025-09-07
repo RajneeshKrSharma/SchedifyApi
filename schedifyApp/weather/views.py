@@ -544,6 +544,7 @@ def performNotifyCheck(pincode, scheduleItem, userEmailId, fcmToken, notifyMediu
                     )
                     requestBody["elig_diff"] = next_notify_time_time_diff
                     requestBody["elig_diff_unit"] = get_unit(TIME_DIVISOR)
+                    requestBody["isActive"] = notifyTime is not None
 
                     serializer = WeatherForecastSerializer(existing_weather_forecast_data, data=requestBody,
                                                            partial=True)
