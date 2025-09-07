@@ -19,7 +19,7 @@ from ..address.serializers import AddressSerializer
 from ..core.perform import prepare_forcast_create_request, round_down_to_nearest_3hr, CustomJSONEncoder, \
     prepare_forcast_update_request_scheduleItem_obj
 from ..core.weather_utils import fetch_weather_data_by_pincode, send_weather_notification, \
-    send_weather_push_notification
+    send_weather_push_notification, getUrlByWeatherType
 from ..post_login.models import PostLoginUserDetail
 from ..schedule_list.models import ScheduleItemList
 from ..schedule_list.serializers import ScheduleItemListSerializers
@@ -580,7 +580,7 @@ def performNotifyCheck(pincode, scheduleItem, userEmailId, fcmToken, notifyMediu
                                             f"is expected in your area,  {scheduleItem.title} was scheduled for {schedule_items_date_time.strftime("%d %b, %Y %I:%M %p")}",
                                     "channel": "ALERT",
                                     "token": fcmToken,
-                                    "weather_image_url": "",
+                                    "weather_image_url": getUrlByWeatherType(existing_weather_forecast_data.weatherType),
                                     "uniqueId": existing_weather_forecast_data.unique_key
                                 }
                                 result = send_weather_push_notification(

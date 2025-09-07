@@ -257,3 +257,16 @@ def send_weather_push_notification(request) -> str:
     except httpx.RequestError as e:
         print(f"❌ Request error: Url : {url} | {e}")
         return f"❌ Request error: Url : {url} | {e}"
+
+def getUrlByWeatherType(weatherType: str) -> str:
+    urls = {
+        "clear": "https://ahambrahmasmi.pythonanywhere.com/media/images/clear_sky.jpg",
+        "cloud": "https://ahambrahmasmi.pythonanywhere.com/media/images/cloud.jpg",
+        "rain": "https://ahambrahmasmi.pythonanywhere.com/media/images/rain.jpg",
+        "snow": "https://ahambrahmasmi.pythonanywhere.com/media/images/snow.jpeg",
+        "thunder": "https://ahambrahmasmi.pythonanywhere.com/media/images/thunder.jpg",
+        "storm": "https://ahambrahmasmi.pythonanywhere.com/media/images/storm.png",
+        "drizzle": "https://ahambrahmasmi.pythonanywhere.com/media/images/drizzle.jpg",
+        "fog": "https://ahambrahmasmi.pythonanywhere.com/media/images/fog.jpg",
+    }
+    return urls.get(weatherType.lower(), "")
