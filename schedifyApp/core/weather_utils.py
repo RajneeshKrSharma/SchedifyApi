@@ -2,7 +2,7 @@ import httpx
 
 from schedify import settings
 from schedify.settings import OPEN_WEATHER_MAP_API_KEY
-BASE_URL = getattr(settings, "ENCRYPTION_DISABLED_PATHS", [])
+BASE_URL = getattr(settings, "BASE_URL", [])
 
 def fetch_weather_data_by_pincode(pincode) -> dict | str:
     url = f"https://api.openweathermap.org/data/2.5/forecast?zip={pincode},IN&appid={OPEN_WEATHER_MAP_API_KEY}"
