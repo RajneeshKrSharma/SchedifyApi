@@ -252,8 +252,8 @@ def send_weather_push_notification(request) -> str:
             print("✅ Push notification sent successfully!")
             return "✅ Push notification sent successfully!"
         else:
-            print(f"⚠️ Failed to send push notification. Status: {response.status_code} | {response.text}")
-            return f"⚠️ Failed to send push notification. Status: {response.status_code} | {response.text}"
+            print(f"⚠️ Failed to send push notification. Url : {url} | Status:  {response.status_code} | {response.text}")
+            return f"⚠️ Failed to send push notification. Url : {url} | Status: {response.status_code} | {response.text}"
     except httpx.RequestError as e:
-        print(f"❌ Request error: {e}")
-        return f"❌ Request error: {e}"
+        print(f"❌ Request error: Url : {url} | {e}")
+        return f"❌ Request error: Url : {url} | {e}"
