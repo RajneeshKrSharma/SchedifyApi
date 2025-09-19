@@ -269,4 +269,11 @@ def getUrlByWeatherType(weatherType: str) -> str:
         "drizzle": "https://ahambrahmasmi.pythonanywhere.com/media/images/drizzle.jpg",
         "fog": "https://ahambrahmasmi.pythonanywhere.com/media/images/fog.jpg",
     }
-    return urls.get(weatherType.lower(), "")
+
+    weatherType = weatherType.lower()
+
+    for key, url in urls.items():
+        if key in weatherType:   # contains check
+            return url
+
+    return ""  # fallback if nothing matched
