@@ -31,11 +31,9 @@ class WeatherForecastAPIView(APIView):
 
     def get(self, request):
         user = request.app_user
-        current_time = now()
 
         user_scheduled_objects = ScheduleItemList.objects.filter(
             user_id=user.id,
-            dateTime__gt=current_time,
         )
 
         pincode = request.query_params.get('pincode')
