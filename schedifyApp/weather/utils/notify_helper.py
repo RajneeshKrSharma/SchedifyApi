@@ -48,7 +48,7 @@ def get_time_until_update(
     else:
         return f"NOTIFY BLOCKED: ${"{:.2f}".format(time_diff)}"
 
-    return f"{delay}\n{get_unit(TIME_DIVISOR)}"
+    return f"{delay}"
 
 
 def getTimeUnitType(divisor) -> TimeUnitType:
